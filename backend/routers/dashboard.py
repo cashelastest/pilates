@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from typeguard import typechecked
 from connection import Connection
 from utils import get_all_lessons, change_lesson_by_id,get_client_and_group_names
+from models import Lesson, Client, Group,Coach,Subscription
 from fastapi.templating import Jinja2Templates
 # from pathlib import Path
 dashboard_router = APIRouter(prefix='/dashboard', tags=['dashboard'])
@@ -36,13 +37,13 @@ class DashboardManager:
 
 
     async def send_active_clients(self, ws:WebSocket):
-        print(1)
+        
         response = {
             "code":289,
             'data':get_client_and_group_names(self.session)
             }
         await ws.send_json(response)
-        print("sended fetch down")
+        print("sended fetch down : ", response)
     async def change_lessons_day_or_time(self, changed_data:dict):
 
         if all(key in changed_data for key in ['id', 'start', 'end']):
@@ -69,7 +70,23 @@ class DashboardManager:
         message = await ws.receive_json()
         print(f"recieved data: {message}")
         return message
-        
+    async def create_lesson(self, lesson_data:dict):
+        lesson = Lesson(
+            date=lesson_data['date'],
+            start_time=lesson_data['start_time'],
+            end_time=lesson_data['end_time'],
+            client_id=lesson_data['client_id'],
+            coach_id=lesson_data['coach_id'],
+            group_id=lesson_data['group_id'],
+            price=lesson_data['price'],
+            subscription_id=lesson_data['subscription_id']
+        )
+        self.session.add(lesson)
+        self.session.commit()
+        print(f"Lesson {lesson.id} created successfully!")
+    async def cancel_lesson(self, lesson_id:int):
+        self.session.get(Lesson,lesson_id).is_cancelled = True
+        self.session.commit()
 manager = DashboardManager()
 
 @dashboard_router.get('/')
@@ -90,8 +107,10 @@ async def dashboard_socket(ws:WebSocket):
                 case 188:
                     await manager.change_lessons_day_or_time(changed_data=data)
                 case 189:
-
                     await manager.send_active_clients(ws)
+                case 190:
+                    print(data)
+                    await manager.create_lesson(lesson_data=data['event'])
                 case _:
                     print('don`t understand')
                     raise HTTPException("Wrong code")

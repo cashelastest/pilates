@@ -16,10 +16,14 @@ def get_all_lessons():
         else:
             status = 'scheduled'
             class_name = 'future_lesson'
+        if lesson.client:
+            name = lesson.client.name
+        else:
+            name = lesson.group.name
         events.append(
             {
                 'id':lesson.id,
-                'title':lesson.client.name,
+                'title':name,
                 "start":f'{lesson.date}T{lesson.start_time}',
                 "end":f'{lesson.date}T{lesson.end_time}',
                 "extendedProps":{
@@ -57,4 +61,5 @@ def get_client_and_group_names(session: Session)-> list:
     coaches_list = [{"id":coach.id,"name":coach.name} for coach in coaches]
     subscriptions = session.query(Subscription.id, Subscription.name).all()
     subscriptions_list = [{"id":subscription.id,"name":subscription.name} for subscription in subscriptions]
-    return [coaches_list,groups_list,clients_list, subscriptions_list]
+    result  =[coaches_list,groups_list,clients_list, subscriptions_list]
+    return result

@@ -49,14 +49,14 @@ class SubscriptionSchedule(Base):
 
 class Lesson(Base):
     __tablename__ = 'lessons'
-    price = Column(Float)
+    price = Column(Float, nullable=False)
     date = Column(Date)
     start_time = Column(Time)
     end_time = Column(Time)
     subscription_id = Column(Integer, ForeignKey("subscriptions.id"),nullable=True)
     subscription = relationship('Subscription', back_populates='lessons')
     is_cancelled = Column(Boolean, default=False)
-    client_id = Column(Integer, ForeignKey("clients.id"))
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     coach_id = Column(Integer, ForeignKey("coaches.id"))
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
     group = relationship('Group', back_populates= 'lessons')

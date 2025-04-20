@@ -1,0 +1,7 @@
+sqlalchemy
+fastapi
+typeguard
+uvicorn
+uvicorn[standard]
+pymysql
+jinja2

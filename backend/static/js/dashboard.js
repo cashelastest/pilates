@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function(){
     
     groupSelect.disabled = false;
     groupSelect.parentElement.style.opacity = '1';
+    
   }
   
   // Загрузка данных для выпадающих списков
@@ -294,10 +295,12 @@ data[3].forEach(subscription => {
     const coachId = coachSelect.value;
     const coachName = coachSelect.options[coachSelect.selectedIndex].textContent;
     const groupId = groupSelect.value;
-    const clientId = clientSelect.value;
-    const price = priceInput.value;
+    let clientId = clientSelect.value;
+    const price = parseInt(priceInput.value);
     const subscriptionId = subscriptionSelect.value;
-    
+    if (clientId ===''){
+      clientId = null;
+    }
     // Создание объектов даты начала и окончания
     const startDate = new Date(`${date}T${startTime}`);
     const endDate = new Date(`${date}T${endTime}`);
@@ -325,7 +328,7 @@ data[3].forEach(subscription => {
     
     // Отправка данных на сервер через WebSocket
     ws.send(JSON.stringify({
-      code: 189, // Код для создания нового занятия
+      code: 190, // Код для создания нового занятия
       event: {
         title: title,
         date: date,
@@ -333,7 +336,7 @@ data[3].forEach(subscription => {
         end_time: endTime,
         coach_id: coachId,
         group_id: groupId || null,
-        client_id: clientId,
+        client_id: clientId || null,
         price: price,
         subscription_id: subscriptionId || null,
         is_cancelled: false
