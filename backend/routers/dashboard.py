@@ -1,0 +1,101 @@
+from fastapi import Request,APIRouter,WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.responses import HTMLResponse
+from typeguard import typechecked
+from connection import Connection
+from utils import get_all_lessons, change_lesson_by_id,get_client_and_group_names
+from fastapi.templating import Jinja2Templates
+# from pathlib import Path
+dashboard_router = APIRouter(prefix='/dashboard', tags=['dashboard'])
+
+
+
+templates = Jinja2Templates(directory='templates')
+
+class DashboardManager:
+    def __init__(self):
+        self.active_users = []
+        self.session = Connection.get_session()
+    
+    async def connect(self, ws:WebSocket):
+        await ws.accept()
+        self.active_users.append(ws)
+
+
+    def disconnect(self, ws:WebSocket):
+        ws.close()
+        self.active_users.remove(ws)
+
+
+    async def send_lessons(self, ws:WebSocket):
+        print('send')
+        events = {
+            'code':287,
+            'data':get_all_lessons()}
+        await ws.send_json(events)
+        print('sended')
+
+
+    async def send_active_clients(self, ws:WebSocket):
+        print(1)
+        response = {
+            "code":289,
+            'data':get_client_and_group_names(self.session)
+            }
+        await ws.send_json(response)
+        print("sended fetch down")
+    async def change_lessons_day_or_time(self, changed_data:dict):
+
+        if all(key in changed_data for key in ['id', 'start', 'end']):
+            try: 
+                id = int(changed_data['id'])
+            except ValueError:
+                raise Exception ('id is not an int!')
+            date,start_time  = changed_data['start'].split("T")
+            end_date, end_time = changed_data['end'].split("T")
+            if date != end_date:
+                print('Error! Date mismatch. Lesson is longer than 1 day.')
+                raise Exception("Date mismatch.")
+            change_lesson_by_id(
+                id = id,
+                session = self.session,
+                date = date, 
+                start_time = start_time[:-6], 
+                end_time =end_time[:-6]
+                )
+            print(f'Successfully changed lesson {changed_data['id']} !')
+            return
+        print("Error! Invalid Changed data!")
+    async def recieve_message(self, ws: WebSocket):
+        message = await ws.receive_json()
+        print(f"recieved data: {message}")
+        return message
+        
+manager = DashboardManager()
+
+@dashboard_router.get('/')
+async def dashboard_home(request: Request):
+    return templates.TemplateResponse(
+        request=request, name='index.html'
+    )
+
+@dashboard_router.websocket('/socket/')
+async def dashboard_socket(ws:WebSocket):
+    await manager.connect(ws)
+    try:
+        while True:
+            data =await manager.recieve_message(ws)
+            match data.get('code'):
+                case 187: 
+                    await manager.send_lessons(ws)
+                case 188:
+                    await manager.change_lessons_day_or_time(changed_data=data)
+                case 189:
+
+                    await manager.send_active_clients(ws)
+                case _:
+                    print('don`t understand')
+                    raise HTTPException("Wrong code")
+                
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
+        print("Ended websocket connection")

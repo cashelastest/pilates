@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilates Studio CRM</title>
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/dashboard_modal_window_styles.css')}}">
+
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/uk.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header-block">
+        <span class="left-part">Pilates Studio</span>
+        <nav>
+            <ul>
+                <li class="active-page"><a href="index.html">Дошка</a></li>
+                <li><a href="coaches.html">Тренери</a></li>
+                <li><a href="clients.html">Клієнти</a></li>
+                <li><a href="stats.html">Статистика</a></li>
+            </ul>
+        </nav>
+        <div class="menu-btn" aria-label="Відкрити меню">
+            <div class="hamburger">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </div>
+        </div>
+        <!-- <div class="right-header">
+            <span>Вхід</span>
+            <span>Реєстрація</span>
+        </div> -->
+        <div class="dropdown-menu">
+            <a href="index.html" class="dropdown-item">Дошка</a>
+            <a href="coaches.html" class="dropdown-item">Тренери</a>
+            <a href="clients.html" class="dropdown-item">Клієнти</a>
+            <a href="stats.html" class="dropdown-item">Статистика</a>
+            <!-- <a href="login.html" class="dropdown-item">Вхід</a>
+            <a href="register.html" class="dropdown-item">Реєстрація</a> -->
+        </div>
+    </header>
+
+    <main>
+        <div id="calendar"></div>
+    </main>
+
+    <footer>
+        <!-- Футер можно добавить при необходимости -->
+    </footer>
+    <div id="lessonModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Створення заняття</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="lessonForm">
+                    <div class="form-group">
+                        <label for="lessonTitle">Назва групи</label>
+                        <input type="text" class="form-control" id="lessonTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lessonDate">Дата</label>
+                        <input type="date" class="form-control" id="lessonDate" readonly>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="startTime">Час початку</label>
+                            <input type="time" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="endTime">Час закінчення</label>
+                            <input type="time" class="form-control" id="endTime" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="coachSelect">Тренер</label>
+                        <select class="form-control" id="coachSelect" required>
+                            <option value="">Оберіть тренера</option>
+                            <!-- Will be populated from API -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="groupSelect">Група</label>
+                        <select class="form-control" id="groupSelect">
+                            <option value="">Оберіть групу (необов'язково)</option>
+                            <!-- Will be populated from API -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientSelect">Клієнт</label>
+                        <select class="form-control" id="clientSelect" required>
+                            <option value="">Оберіть клієнта</option>
+                            <!-- Will be populated from API -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lessonPrice">Вартість (₴)</label>
+                        <input type="number" class="form-control" id="lessonPrice" min="0" step="50" value="500" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subscriptionSelect">Абонемент</label>
+                        <select class="form-control" id="subscriptionSelect">
+                            <option value="">Оберіть абонемент (необов'язково)</option>
+                            <!-- Will be populated from API -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelLessonBtn">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveLessonBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{url_for('static',path = '/js/menu.js')}}"></script>
+    <script src="{{url_for('static',path = '/js/dashboard.js')}}"></script>
+</body>
+</html>
