@@ -87,14 +87,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Название
     const titleEl = document.createElement('div');
     titleEl.classList.add('fc-event-title-custom');
-    titleEl.innerHTML = arg.event.title || '';
+    titleEl.innerHTML = arg.event.extendedProps.trainer || '';
     
     // Добавляем информацию о тренере, если есть
-    if (arg.event.extendedProps && arg.event.extendedProps.trainer) {
+    if (arg.event.title) {
       const trainerEl = document.createElement('div');
       trainerEl.style.fontSize = '0.85em';
-      trainerEl.style.opacity = '0.8';
-      trainerEl.innerHTML = arg.event.extendedProps.trainer;
+      trainerEl.style.color = '#7D9D9C';
+      trainerEl.innerHTML = arg.event.title;
       centerEl.appendChild(trainerEl);
     }
     

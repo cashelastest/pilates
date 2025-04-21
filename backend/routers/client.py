@@ -5,6 +5,7 @@ from fastapi.websockets import WebSocket
 from connection import Connection
 from models import Client, Lesson, Coach, Subscription
 from datetime import datetime
+import time
 from utils import check_is_used_lesson
 client_router = APIRouter(prefix='/client', tags = ['client'])
 templates = Jinja2Templates(directory='templates')
@@ -35,6 +36,8 @@ class ClientManager(Manager):
         }
         print(client_data)
         await ws.send_json(client_data)
+
+
     async def get_subs(self, ws:WebSocket, username:str):
         print(username)
         client = self.session.query(Client).filter(Client.username == username).first()
@@ -63,8 +66,8 @@ class ClientManager(Manager):
                     {
                     'id':schedule.id,
                     'day_of_the_week':schedule.day_of_the_week,
-                    "start_time": datetime.strftime(schedule.start_time, "%H:%m:%s"),
-                    "end_time": datetime.strftime(schedule.end_time, "%H:%m:%s"),
+                    "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                    "end_time": schedule.end_time.strftime("%H:%M:%S"),
                     } for schedule in subscription.schedules],
             })
         response = {
@@ -73,6 +76,24 @@ class ClientManager(Manager):
                 "subscriptions":data,
                 "all_subscriptions":subs_data
             }
+        }
+        await ws.send_json(response)
+    async def fetch_client_lessons(self, ws:WebSocket, username : str):
+        client = self.session.query(Client).filter(Client.username == username).first()
+        lessons = client.lessons
+        response_data = [{
+            "id":lesson.id,
+            "title": lesson.group.name if lesson.group.name else lesson.coach.name,
+            'date': datetime.strftime(lesson.date, '%Y-%m-%d'),
+            "start_time": lesson.start_time.strftime("%H:%M:%S"),
+            "end_time": lesson.end_time.strftime("%H:%M:%S"),
+            "coach_name":lesson.coach.name,
+            "price":lesson.price,
+            "is_cancelled":lesson.is_cancelled
+        } for lesson in lessons]
+        response = {
+            "code": 295,
+            "data":response_data
         }
         await ws.send_json(response)
 

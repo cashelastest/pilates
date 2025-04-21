@@ -5,17 +5,21 @@ from routers.client import clinet_manager
 
 
 socket = APIRouter(prefix = '/socket')
+class SocketManager:
+    connecions = []
 @socket.websocket('/')
 async def dashboard_socket(ws:WebSocket):
     await manager.connect(ws)
+    SocketManager.connecions.append(ws)
     try:
         while True:
             data =await manager.recieve_message(ws)
             match data.get('code'):
                 case 187: 
-                    await manager.send_lessons(ws)
+                    await manager.send_lessons(ws, is_changed=False)
                 case 188:
                     await manager.change_lessons_day_or_time(changed_data=data)
+                    await manager.send_lessons(ws)
                 case 189:
                     await manager.send_active_clients(ws)
                 case 190:
@@ -32,6 +36,8 @@ async def dashboard_socket(ws:WebSocket):
                     await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
                 case 198:
                     await clinet_manager.get_subs(ws=ws, username=data.get('username'))
+                case 197:
+                    await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
                 case _:
                     print('don`t understand')
                     print(data)
@@ -40,5 +46,6 @@ async def dashboard_socket(ws:WebSocket):
                 'data': 'success'
             })
     except WebSocketDisconnect:
-        manager.disconnect(ws)
+        await manager.disconnect(ws)
+        SocketManager.connecions.remove(ws)
         print("Ended websocket connection")

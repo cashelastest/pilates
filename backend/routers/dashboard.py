@@ -26,13 +26,18 @@ class DashboardManager:
         self.active_users.remove(ws)
 
 
-    async def send_lessons(self, ws:WebSocket):
+    async def send_lessons(self, ws:WebSocket, is_changed=True):
         print('send')
         events = {
             'code':287,
             'data':get_all_lessons()}
-        await ws.send_json(events)
-        print('sended')
+        if not is_changed:
+
+            await ws.send_json(events)
+            return
+        for websocket in self.active_users:
+            await websocket.send_json(events)
+
 
 
     async def send_active_clients(self, ws:WebSocket):

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isOpen) {
             hamburger.classList.add('active');
             dropdownMenu.classList.add('active');
-            menuBtn.setAttribute('aria-label', 'Закрити меню');
+            menuBtn.setAttribute('aria-label', 'Закрити меню');я
         } else {
             hamburger.classList.remove('active');
             dropdownMenu.classList.remove('active');

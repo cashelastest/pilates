@@ -135,7 +135,7 @@ a {
 }
 
 .fc-timegrid-slot {
-    height: 0.5em !important;
+    height: 1.035em !important; /* Было 0.9em, увеличено на 15% */
     border-color: var(--light-wood) !important;
 }
 
@@ -183,7 +183,7 @@ a {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 8px;
+    padding: 5px;
     height: 100%;
     overflow-y: auto;
     scrollbar-color: transparent;
@@ -236,7 +236,11 @@ a {
     font-size: 0.9em !important;
     color: var(--dark-gray) !important;
 }
-
+.fc-timegrid-axis-cushion,
+.fc-timegrid-slot-label-cushion {
+    font-size: 1.035em !important; /* Увеличено на 15% от 0.9em */
+    color: var(--dark-gray) !important;
+}
 /* Уменьшаем высоту всего контейнера all-day */
 .fc-daygrid-day-events {
     min-height: auto !important;
