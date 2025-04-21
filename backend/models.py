@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Boolean, Float, ForeignKey, Time, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import as_declarative
-
+from datetime import datetime
 
 @as_declarative()
 class Base:
@@ -64,13 +64,16 @@ class Lesson(Base):
     coach = relationship("Coach", back_populates='lessons')
 
 
-
-
-
 class Subscription(Base):
     __tablename__ = 'subscriptions'
     name = Column(String(60))
     price = Column(Float)
+    description = Column(String(800))
+    total_lessons = Column(Integer, default = 4)#!
+    valid_until = Column(Date, default = datetime(2025, 5, 11))
+    is_active = Column(Boolean, default=True)
+    subscription_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    client = relationship('Client', back_populates='subscriptions')
     lessons = relationship('Lesson', back_populates='subscription')
     schedules = relationship('SubscriptionSchedule', back_populates='subscription')
 
@@ -83,11 +86,14 @@ class Client(Base):
     password = Column(String(20))
     status = Column(Boolean)
     date_of_birth = Column(Date)
+    balance = Column(Float, default=5000.0)
     sex = Column(Boolean) #0 male, 1 woman
     description = Column(String(300))
     joined = Column(Date)
     coach_id = Column(Integer, ForeignKey("coaches.id"))
     group_id = Column(Integer, ForeignKey("groups.id"))
+
+    subscriptions = relationship('Subscription', back_populates='client')
     group = relationship("Group", back_populates= 'clients')
     coach = relationship("Coach", back_populates='clients')
     comments = relationship('Comment', back_populates='client')

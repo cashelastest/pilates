@@ -1,13 +1,13 @@
-document.addEventListener('DOMContentLoaded', function(){
-
+document.addEventListener('DOMContentLoaded', function() {
+  // ====================== DASHBOARD.JS ======================
   const calendarEl = document.getElementById('calendar');
-  const ws = new WebSocket('ws://localhost:8000/dashboard/socket/');
+  window.ws = new WebSocket('ws://localhost:8000/socket/');
   let calendar;
   
   ws.onopen = function() {
     console.log('WebSocket соединение установлено');
     ws.send(JSON.stringify({
-      'code':187
+      'code': 187
     }));
   };
   
@@ -22,21 +22,31 @@ document.addEventListener('DOMContentLoaded', function(){
   };
   
   // Обработка сообщений от WebSocket
-  function webSocketMessages(data){
-    console.log(data.data);
-    switch(data.code){
+  function webSocketMessages(data) {
+    console.log('Получен код:', data.code);
+    console.log('Получены данные:', data.data);
+    
+    switch(data.code) {
       case 287:
-        console.log('ok');
+        console.log('Инициализация календаря');
         initializeCalendar(data.data);
         break;
       case 289:
-        fetchDropdownData(data.data)
+        console.log('Получены данные для выпадающих списков занятия');
+        fetchDropdownData(data.data);
+        break;
+      case 293:
+        console.log('Получены данные для выпадающих списков абонемента:', data.data);
+        updateSubscriptionDropdownLists(data.data);
+        break;
       default:
-        console.log('didn t get any');
+        console.log('Не обработанный код:', data.code);
     }
   }
   
-  // Модальное окно
+  // =============== ФУНКЦИИ КАЛЕНДАРЯ И ЗАНЯТИЙ ===============
+  
+  // Модальное окно занятия
   const modal = document.getElementById('lessonModal');
   const closeModalBtn = document.getElementById('closeModal');
   const cancelBtn = document.getElementById('cancelLessonBtn');
@@ -143,10 +153,10 @@ document.addEventListener('DOMContentLoaded', function(){
       start: newStart,
       end: newEnd
     }));
-    console.log("sended!");
+    console.log("Отправлены данные изменения времени события!");
   }
   
-  // Функция для открытия модального окна
+  // Функция для открытия модального окна занятия
   function openModal(date) {
     // Форматируем дату для поля ввода
     const formattedDate = date.toISOString().split('T')[0];
@@ -157,13 +167,11 @@ document.addEventListener('DOMContentLoaded', function(){
     startTimeInput.value = `${String(currentHour).padStart(2, '0')}:00`;
     endTimeInput.value = `${String(currentHour + 1).padStart(2, '0')}:30`;
     
-
-    
     // Показываем модальное окно
     modal.classList.add('active');
   }
   
-  // Функция для закрытия модального окна
+  // Функция для закрытия модального окна занятия
   function closeModal() {
     modal.classList.remove('active');
     lessonForm.reset();
@@ -175,16 +183,13 @@ document.addEventListener('DOMContentLoaded', function(){
     
     groupSelect.disabled = false;
     groupSelect.parentElement.style.opacity = '1';
-    
   }
   
-  // Загрузка данных для выпадающих списков
+  // Загрузка данных для выпадающих списков занятия
   function fetchDropdownData(data) {
-    // Функция-заглушка для демонстрационных данных
-    // В реальном приложении здесь будут запросы к API
+    console.log('Обновление выпадающих списков для занятия:', data);
     
     // Тренеры
-    console.log(data)
     coachSelect.innerHTML = '<option value="">Оберіть тренера</option>';
     data[0].forEach(coach => {
       const option = document.createElement('option');
@@ -195,8 +200,7 @@ document.addEventListener('DOMContentLoaded', function(){
     
     // Группы
     groupSelect.innerHTML = '<option value="">Оберіть групу (необов\'язково)</option>';
-    
-data[1].forEach(group => {
+    data[1].forEach(group => {
       const option = document.createElement('option');
       option.value = group.id;
       option.textContent = group.name;
@@ -214,7 +218,7 @@ data[1].forEach(group => {
     
     // Абонементы
     subscriptionSelect.innerHTML = '<option value="">Оберіть абонемент (необов\'язково)</option>';
-data[3].forEach(subscription => {
+    data[3].forEach(subscription => {
       const option = document.createElement('option');
       option.value = subscription.id;
       option.textContent = subscription.name;
@@ -262,7 +266,7 @@ data[3].forEach(subscription => {
     }
   });
   
-  // Обработчики событий модального окна
+  // Обработчики событий модального окна занятия
   closeModalBtn.addEventListener('click', closeModal);
   cancelBtn.addEventListener('click', closeModal);
   
@@ -298,9 +302,10 @@ data[3].forEach(subscription => {
     let clientId = clientSelect.value;
     const price = parseInt(priceInput.value);
     const subscriptionId = subscriptionSelect.value;
-    if (clientId ===''){
+    if (clientId === '') {
       clientId = null;
     }
+    
     // Создание объектов даты начала и окончания
     const startDate = new Date(`${date}T${startTime}`);
     const endDate = new Date(`${date}T${endTime}`);
@@ -392,7 +397,7 @@ data[3].forEach(subscription => {
       // Обработчик клика по дате
       dateClick: function(info) {
         console.log("clicked on " + info.dateStr);
-        ws.send(JSON.stringify({"code":189}));
+        ws.send(JSON.stringify({"code": 189}));
         openModal(info.date);
       },
       
@@ -471,6 +476,209 @@ data[3].forEach(subscription => {
     }
   };
   
+  // =============== ФУНКЦИИ АБОНЕМЕНТОВ И РАСПИСАНИЙ ===============
+  
+  // Получаем элементы модальных окон абонементов
+  const subscriptionModal = document.getElementById('subscriptionModal');
+  const assignScheduleModal = document.getElementById('assignScheduleModal');
+  
+  // Кнопки открытия модальных окон
+  const createSubscriptionBtn = document.getElementById('createSubscriptionBtn');
+  const assignScheduleBtn = document.getElementById('assignScheduleBtn');
+  
+  // Кнопки закрытия модальных окон
+  const closeSubscriptionModal = document.getElementById('closeSubscriptionModal');
+  const closeAssignScheduleModal = document.getElementById('closeAssignScheduleModal');
+  const cancelSubscriptionBtn = document.getElementById('cancelSubscriptionBtn');
+  const cancelAssignScheduleBtn = document.getElementById('cancelAssignScheduleBtn');
+  
+  // Кнопки сохранения данных
+  const saveSubscriptionBtn = document.getElementById('saveSubscriptionBtn');
+  const saveAssignScheduleBtn = document.getElementById('saveAssignScheduleBtn');
+  
+  // Элементы форм
+  const subscriptionForm = document.getElementById('subscriptionForm');
+  const assignScheduleForm = document.getElementById('assignScheduleForm');
+  
+  // Открытие модального окна для создания абонемента
+  createSubscriptionBtn.addEventListener('click', function() {
+    subscriptionModal.classList.add('active');
+  });
+  
+  // Открытие модального окна для назначения расписания абонементу
+  assignScheduleBtn.addEventListener('click', function() {
+    fetchClientsAndSubscriptions();
+    assignScheduleModal.classList.add('active');
+  });
+  
+  // Закрытие модальных окон
+  function closeSubscriptionModalFunc() {
+    subscriptionModal.classList.remove('active');
+    subscriptionForm.reset();
+  }
+  
+  function closeAssignScheduleModalFunc() {
+    assignScheduleModal.classList.remove('active');
+    assignScheduleForm.reset();
+  }
+  
+  // Привязка событий закрытия модальных окон
+  closeSubscriptionModal.addEventListener('click', closeSubscriptionModalFunc);
+  cancelSubscriptionBtn.addEventListener('click', closeSubscriptionModalFunc);
+  
+  closeAssignScheduleModal.addEventListener('click', closeAssignScheduleModalFunc);
+  cancelAssignScheduleBtn.addEventListener('click', closeAssignScheduleModalFunc);
+  
+  // Закрытие модальных окон при клике вне их области
+  subscriptionModal.addEventListener('click', function(e) {
+    if (e.target === subscriptionModal) {
+      closeSubscriptionModalFunc();
+    }
+  });
+  
+  assignScheduleModal.addEventListener('click', function(e) {
+    if (e.target === assignScheduleModal) {
+      closeAssignScheduleModalFunc();
+    }
+  });
+  
+  // Сохранение абонемента
+  saveSubscriptionBtn.addEventListener('click', function() {
+    if (!subscriptionForm.checkValidity()) {
+      alert('Будь ласка, заповніть всі обов\'язкові поля');
+      return;
+    }
+    
+    const name = document.getElementById('subscriptionName').value;
+    const price = document.getElementById('subscriptionPrice').value;
+    const description = document.getElementById('subscriptionDescription').value || '';
+    
+    // Формирование данных для отправки
+    const subscriptionData = {
+      name: name,
+      price: parseFloat(price),
+      description: description
+    };
+    
+    // Отправка данных на сервер через WebSocket
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+      window.ws.send(JSON.stringify({
+        code: 191, // Код для создания абонемента
+        subscription: subscriptionData
+      }));
+      
+      console.log('Отправлены данные абонемента:', subscriptionData);
+      
+      // Закрытие модального окна
+      closeSubscriptionModalFunc();
+    } else {
+      alert('Немає з\'єднання з сервером');
+    }
+  });
+  
+  // Сохранение назначения расписания абонементу
+  saveAssignScheduleBtn.addEventListener('click', function() {
+    if (!assignScheduleForm.checkValidity()) {
+      alert('Будь ласка, заповніть всі обов\'язкові поля');
+      return;
+    }
+    
+    const clientId = document.getElementById('assignClientSelect').value;
+    const subscriptionId = document.getElementById('assignSubscriptionSelect').value;
+    const dayOfWeek = document.getElementById('assignDayOfWeekSelect').value;
+    const startTime = document.getElementById('assignStartTime').value;
+    const endTime = document.getElementById('assignEndTime').value;
+    
+    // Формирование данных для отправки (без поля coach_id)
+    const scheduleData = {
+      client_id: clientId,
+      subscription_id: subscriptionId,
+      day_of_the_week: parseInt(dayOfWeek),
+      start_time: startTime,
+      end_time: endTime
+    };
+    
+    // Отправка данных на сервер через WebSocket
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+      window.ws.send(JSON.stringify({
+        code: 192, // Код для назначения расписания абонементу
+        schedule: scheduleData
+      }));
+      
+      console.log('Отправлены данные расписания:', scheduleData);
+      
+      // Закрытие модального окна
+      closeAssignScheduleModalFunc();
+    } else {
+      alert('Немає з\'єднання з сервером');
+    }
+  });
+  
+  // Получение списка клиентов и абонементов для формы назначения расписания
+  function fetchClientsAndSubscriptions() {
+    // Проверяем, есть ли глобальная переменная ws
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+      window.ws.send(JSON.stringify({
+        code: 193 // Код для запроса данных
+      }));
+      console.log('Отправлен запрос на получение данных для выпадающих списков');
+    } else {
+      console.error('WebSocket соединение не установлено');
+      alert('Немає з\'єднання з сервером');
+    }
+  }
+  
+  // Обновление выпадающих списков для абонементов
+  function updateSubscriptionDropdownLists(data) {
+    console.log("Обновление выпадающих списков абонементов с данными:", data);
+    
+    // Проверка, что данные - это массив и имеет нужную длину
+    if (!Array.isArray(data) || data.length < 2) {
+      console.error("Неверный формат данных для выпадающих списков:", data);
+      return;
+    }
+    
+    // Обновление списка клиентов
+    const clientSelect = document.getElementById('assignClientSelect');
+    if (clientSelect) {
+      clientSelect.innerHTML = '<option value="">Оберіть клієнта</option>';
+      
+      // Проверка, что данные клиентов - это массив
+      if (Array.isArray(data[0])) {
+        data[0].forEach(client => {
+          const option = document.createElement('option');
+          option.value = client.id;
+          option.textContent = client.name;
+          clientSelect.appendChild(option);
+        });
+      } else {
+        console.error("Данные клиентов не являются массивом:", data[0]);
+      }
+    } else {
+      console.error("Элемент assignClientSelect не найден");
+    }
+    
+    // Обновление списка абонементов
+    const subscriptionSelect = document.getElementById('assignSubscriptionSelect');
+    if (subscriptionSelect) {
+      subscriptionSelect.innerHTML = '<option value="">Оберіть абонемент</option>';
+      
+      // Проверка, что данные абонементов - это массив
+      if (Array.isArray(data[1])) {
+        data[1].forEach(subscription => {
+          const option = document.createElement('option');
+          option.value = subscription.id;
+          option.textContent = subscription.name;
+          subscriptionSelect.appendChild(option);
+        });
+      } else {
+        console.error("Данные абонементов не являются массивом:", data[1]);
+      }
+    } else {
+      console.error("Элемент assignSubscriptionSelect не найден");
+    }
+  }
+
   // Инициализируем календарь с пустыми событиями
   initializeCalendar([]);
 });

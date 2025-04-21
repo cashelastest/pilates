@@ -2,6 +2,7 @@ from connection import  Connection
 from sqlalchemy.orm import Session
 from models import Lesson, Client, Group,Coach,Subscription
 from datetime import datetime,date
+import time
 def get_all_lessons():
     session = Connection.get_session()
     lessons = list(session.query(Lesson).all())
@@ -44,22 +45,20 @@ def change_lesson_by_id(id: int, session: Session ,**kwargs):
         setattr(lesson, key,value) 
     session.commit()
 
-def get_client_and_group_names(session: Session)-> list:
-    """_summary_
 
-    Args:
-        session (Session): _description_
+def get_items_list(session,*models):
+    results =[]
+    for model in models:
+        items = session.query(model.id, model.name).all()
+        result = [{"id": item.id, "name": item.name} for item in items]
+        results.append(result)
+    return results
 
-    Returns:
-        list: list of list[Client] and list[Group]
-    """
-    clients = session.query(Client.id, Client.name).all()
-    clients_list = [{'id':client.id, "name":client.name } for client in clients]
-    groups = session.query(Group.id, Group.name).all()
-    groups_list =  [{'id':group.id, "name":group.name} for group in groups]
-    coaches = session.query(Coach.id, Coach.name).all()
-    coaches_list = [{"id":coach.id,"name":coach.name} for coach in coaches]
-    subscriptions = session.query(Subscription.id, Subscription.name).all()
-    subscriptions_list = [{"id":subscription.id,"name":subscription.name} for subscription in subscriptions]
-    result  =[coaches_list,groups_list,clients_list, subscriptions_list]
-    return result
+def check_is_used_lesson(lesson:Lesson)-> bool:
+    if lesson.is_cancelled:
+        return False
+    if lesson.date <date.today():
+        return False
+    if lesson.date ==date.today() and lesson.end_time < datetime.now().time():
+        return False
+    return True

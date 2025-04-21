@@ -1,6 +1,4 @@
-/* Добавьте этот код в ваш файл style.css */
-
-/* Стили для модального окна */
+/* Модальное окно */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -150,4 +148,93 @@
         padding: 8px 15px;
         font-size: 0.9rem;
     }
+}
+
+/* Стили для списка расписаний */
+.empty-message {
+    color: var(--light-gray);
+    text-align: center;
+    font-style: italic;
+    padding: 10px;
+}
+
+.schedules-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--light-wood);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: var(--beige-bg);
+}
+
+.schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--light-wood);
+    transition: background-color 0.2s ease;
+}
+
+.schedule-item:hover {
+    background-color: var(--warm-sand);
+}
+
+.schedule-item:last-child {
+    border-bottom: none;
+}
+
+.schedule-delete {
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 1.2rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.schedule-delete:hover {
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.form-row > .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-text {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Стили для селекта */
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Затемнение неактивных полей */
+.form-group.disabled {
+    opacity: 0.5;
+}
+
+.modal-form-separator {
+    margin: 15px 0;
+    border-top: 1px solid var(--light-wood);
+    padding-top: 15px;
 }

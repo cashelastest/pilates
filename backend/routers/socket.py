@@ -1,0 +1,44 @@
+from fastapi import APIRouter
+from fastapi.websockets import WebSocket, WebSocketDisconnect
+from routers.dashboard import manager
+from routers.client import clinet_manager
+
+
+socket = APIRouter(prefix = '/socket')
+@socket.websocket('/')
+async def dashboard_socket(ws:WebSocket):
+    await manager.connect(ws)
+    try:
+        while True:
+            data =await manager.recieve_message(ws)
+            match data.get('code'):
+                case 187: 
+                    await manager.send_lessons(ws)
+                case 188:
+                    await manager.change_lessons_day_or_time(changed_data=data)
+                case 189:
+                    await manager.send_active_clients(ws)
+                case 190:
+                    print(data)
+                    await manager.create_lesson(lesson_data=data['event'])
+                    await manager.send_lessons(ws)
+                case 191:
+                    await manager.create_subscription(subscription_data=data['subscription'])
+                case 192:
+                    await manager.apply_schedule_for_subscription(data['schedule'])
+                case 193:
+                    await manager.fetch_clients_subs_coaches(ws)
+                case 194:
+                    await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
+                case 198:
+                    await clinet_manager.get_subs(ws=ws, username=data.get('username'))
+                case _:
+                    print('don`t understand')
+                    print(data)
+            await ws.send_json({
+                'code': 200,
+                'data': 'success'
+            })
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
+        print("Ended websocket connection")

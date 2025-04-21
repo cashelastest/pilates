@@ -2,12 +2,11 @@ from fastapi import Request,APIRouter,WebSocket, WebSocketDisconnect, HTTPExcept
 from fastapi.responses import HTMLResponse
 from typeguard import typechecked
 from connection import Connection
-from utils import get_all_lessons, change_lesson_by_id,get_client_and_group_names
-from models import Lesson, Client, Group,Coach,Subscription
+from utils import get_all_lessons, change_lesson_by_id,get_items_list
+from models import Lesson, Client, Group,Coach,Subscription, SubscriptionSchedule
 from fastapi.templating import Jinja2Templates
 # from pathlib import Path
 dashboard_router = APIRouter(prefix='/dashboard', tags=['dashboard'])
-
 
 
 templates = Jinja2Templates(directory='templates')
@@ -37,15 +36,15 @@ class DashboardManager:
 
 
     async def send_active_clients(self, ws:WebSocket):
-        
         response = {
             "code":289,
-            'data':get_client_and_group_names(self.session)
+            'data':get_items_list(self.session, Coach, Group, Client)
             }
         await ws.send_json(response)
         print("sended fetch down : ", response)
-    async def change_lessons_day_or_time(self, changed_data:dict):
 
+
+    async def change_lessons_day_or_time(self, changed_data:dict):
         if all(key in changed_data for key in ['id', 'start', 'end']):
             try: 
                 id = int(changed_data['id'])
@@ -66,10 +65,24 @@ class DashboardManager:
             print(f'Successfully changed lesson {changed_data['id']} !')
             return
         print("Error! Invalid Changed data!")
+
+
     async def recieve_message(self, ws: WebSocket):
         message = await ws.receive_json()
         print(f"recieved data: {message}")
         return message
+    
+    async def create_subscription(self, subscription_data:dict):
+        subscription = Subscription(
+            name=subscription_data['name'],
+            price=subscription_data['price'],
+            description=subscription_data['description'],
+        )
+        self.session.add(subscription)
+        self.session.commit()
+        print(f"Subscription {subscription.id} created successfully!")
+        return subscription
+
     async def create_lesson(self, lesson_data:dict):
         lesson = Lesson(
             date=lesson_data['date'],
@@ -84,9 +97,27 @@ class DashboardManager:
         self.session.add(lesson)
         self.session.commit()
         print(f"Lesson {lesson.id} created successfully!")
+
+
     async def cancel_lesson(self, lesson_id:int):
         self.session.get(Lesson,lesson_id).is_cancelled = True
         self.session.commit()
+
+    async def apply_schedule_for_subscription(self, data:dict):
+        subscription = SubscriptionSchedule(
+            subscription_id = data['subscription_id'],
+            date =  data.get("date"),
+            start_time = data['start_time'],
+            end_time = data['end_time'],
+            day_of_the_week = data.get('day_of_the_week')
+        )
+        self.session.add(subscription)
+        self.session.commit()
+        return subscription
+    
+    async def fetch_clients_subs_coaches(self, ws: WebSocket):
+        data = get_items_list(self.session, Client, Subscription)
+        await ws.send_json({"code":293, 'data':data})
 manager = DashboardManager()
 
 @dashboard_router.get('/')
@@ -95,26 +126,3 @@ async def dashboard_home(request: Request):
         request=request, name='index.html'
     )
 
-@dashboard_router.websocket('/socket/')
-async def dashboard_socket(ws:WebSocket):
-    await manager.connect(ws)
-    try:
-        while True:
-            data =await manager.recieve_message(ws)
-            match data.get('code'):
-                case 187: 
-                    await manager.send_lessons(ws)
-                case 188:
-                    await manager.change_lessons_day_or_time(changed_data=data)
-                case 189:
-                    await manager.send_active_clients(ws)
-                case 190:
-                    print(data)
-                    await manager.create_lesson(lesson_data=data['event'])
-                case _:
-                    print('don`t understand')
-                    raise HTTPException("Wrong code")
-                
-    except WebSocketDisconnect:
-        manager.disconnect(ws)
-        print("Ended websocket connection")

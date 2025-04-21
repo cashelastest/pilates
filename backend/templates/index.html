@@ -13,6 +13,44 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
+    <style>
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .action-button {
+            background-color: var(--terracotta);
+            color: var(--warm-white);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .action-button:hover {
+            background-color: var(--coral);
+        }
+        .modal-form-separator {
+            margin: 15px 0;
+            border-top: 1px solid var(--light-wood);
+            padding-top: 15px;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row > div {
+            flex: 1;
+        }
+        @media screen and (max-width: 720px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="header-block">
@@ -47,12 +85,18 @@
     </header>
 
     <main>
+        <div class="action-buttons">
+            <button class="action-button" id="createSubscriptionBtn">Створити абонемент</button>
+            <button class="action-button" id="assignScheduleBtn">Призначити розклад абонементу</button>
+        </div>
         <div id="calendar"></div>
     </main>
 
     <footer>
         <!-- Футер можно добавить при необходимости -->
     </footer>
+
+    <!-- Модальное окно для создания занятия -->
     <div id="lessonModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -92,6 +136,7 @@
                             <option value="">Оберіть групу (необов'язково)</option>
                             <!-- Will be populated from API -->
                         </select>
+                        <small class="form-text" style="color: var(--dark-gray);">Виберіть групу або окремого клієнта нижче</small>
                     </div>
                     <div class="form-group">
                         <label for="clientSelect">Клієнт</label>
@@ -99,6 +144,7 @@
                             <option value="">Оберіть клієнта</option>
                             <!-- Will be populated from API -->
                         </select>
+                        <small class="form-text" style="color: var(--dark-gray);">При виборі групи поле стане неактивним</small>
                     </div>
                     <div class="form-group">
                         <label for="lessonPrice">Вартість (₴)</label>
@@ -119,7 +165,100 @@
             </div>
         </div>
     </div>
+
+    <!-- Модальное окно для создания абонемента -->
+    <div id="subscriptionModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Створення абонементу</h3>
+                <button class="modal-close" id="closeSubscriptionModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="subscriptionForm">
+                    <div class="form-group">
+                        <label for="subscriptionName">Назва абонементу</label>
+                        <input type="text" class="form-control" id="subscriptionName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subscriptionPrice">Вартість (₴)</label>
+                        <input type="number" class="form-control" id="subscriptionPrice" min="0" step="50" value="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subscriptionDescription">Опис (необов'язково)</label>
+                        <textarea class="form-control" id="subscriptionDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-text" style="color: var(--dark-gray); margin-top: 15px;">
+                        Розклад для абонементу можна буде додати пізніше при призначенні абонементу клієнтам.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelSubscriptionBtn">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveSubscriptionBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для назначения расписания абонементу клиента --><!-- Модальное окно для назначения расписания абонементу клиента (без выбора тренера) -->
+<div id="assignScheduleModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">Призначення розкладу абонементу</h3>
+            <button class="modal-close" id="closeAssignScheduleModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="assignScheduleForm">
+                <div class="form-group">
+                    <label for="assignClientSelect">Клієнт</label>
+                    <select class="form-control" id="assignClientSelect" required>
+                        <option value="">Оберіть клієнта</option>
+                        <!-- Will be populated from API -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignSubscriptionSelect">Абонемент</label>
+                    <select class="form-control" id="assignSubscriptionSelect" required>
+                        <option value="">Оберіть абонемент</option>
+                        <!-- Will be populated from API -->
+                    </select>
+                </div>
+                <div class="modal-form-separator"></div>
+                <div class="form-group">
+                    <label>Розклад для абонементу</label>
+                </div>
+                <div class="form-group">
+                    <label>День тижня</label>
+                    <select class="form-control" id="assignDayOfWeekSelect" required>
+                        <option value="">Оберіть день тижня</option>
+                        <option value="0">Понеділок</option>
+                        <option value="1">Вівторок</option>
+                        <option value="2">Середа</option>
+                        <option value="3">Четвер</option>
+                        <option value="4">П'ятниця</option>
+                        <option value="5">Субота</option>
+                        <option value="6">Неділя</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="assignStartTime">Час початку</label>
+                        <input type="time" class="form-control" id="assignStartTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignEndTime">Час закінчення</label>
+                        <input type="time" class="form-control" id="assignEndTime" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelAssignScheduleBtn">Скасувати</button>
+            <button type="button" class="btn btn-primary" id="saveAssignScheduleBtn">Призначити</button>
+        </div>
+    </div>
+</div>
     <script src="{{url_for('static',path = '/js/menu.js')}}"></script>
     <script src="{{url_for('static',path = '/js/dashboard.js')}}"></script>
+    <!-- <script src="{{url_for('static',path = '/js/subscription.js')}}"></script> -->
 </body>
 </html>
