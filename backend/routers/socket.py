@@ -34,10 +34,14 @@ async def dashboard_socket(ws:WebSocket):
                     await manager.fetch_clients_subs_coaches(ws)
                 case 194:
                     await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
+                case 195:
+                    await clinet_manager.update_client_data(data=data.get('client'))
                 case 198:
                     await clinet_manager.get_subs(ws=ws, username=data.get('username'))
                 case 197:
                     await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
+                case 199:
+                    await clinet_manager.use_sub(data.get("sub_id"),data.get("client_name"))
                 case _:
                     print('don`t understand')
                     print(data)

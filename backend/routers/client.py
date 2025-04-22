@@ -3,16 +3,33 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.websockets import WebSocket
 from connection import Connection
-from models import Client, Lesson, Coach, Subscription
+from models import Client, Lesson, Coach, Subscription, SubscriptionSchedule
 from datetime import datetime
 import time
-from utils import check_is_used_lesson
+from utils import check_is_used_lesson,generate_dates
 client_router = APIRouter(prefix='/client', tags = ['client'])
 templates = Jinja2Templates(directory='templates')
 
 class Manager:
     def __init__(self):
         self.session = Connection.get_session()
+
+
+class Transaction:
+    def __init__(self,session):
+        self.session = session
+    def __enter__(self):
+        return Connection.get_session()
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if not exc_type:
+            try:
+                self.session.commit() 
+            except Exception as e:
+                self.session.rollback()
+                print(f"Error in commit {e}")
+            return
+        self.session.rollback()
+        self.session.close()
 
 
 class ClientManager(Manager):
@@ -83,7 +100,7 @@ class ClientManager(Manager):
         lessons = client.lessons
         response_data = [{
             "id":lesson.id,
-            "title": lesson.group.name if lesson.group.name else lesson.coach.name,
+            "title": lesson.group.name if getattr(lesson, "group") else lesson.coach.name,
             'date': datetime.strftime(lesson.date, '%Y-%m-%d'),
             "start_time": lesson.start_time.strftime("%H:%M:%S"),
             "end_time": lesson.end_time.strftime("%H:%M:%S"),
@@ -96,13 +113,69 @@ class ClientManager(Manager):
             "data":response_data
         }
         await ws.send_json(response)
+    async def update_client_data(self, data):
+        print(data.get('client_username'))
+        client = self.session.query(Client).filter(Client.username == data.get('client_username')).first()
+        del data['client_username']
+        for attr, attr_value in data.items():
+            setattr(client, attr, attr_value)
+        self.session.commit()
+        print(f"Successfully updated user {client.id}")
+    async def assign_sub(self,subs_id, client_username,data):
+        client = self.session.query(Client).filter(Client.username == client_username).first()
+        subscription = self.session.get(Subscription, subs_id)
+        schedule = SubscriptionSchedule(
+            client_id = client.id,
+            subscription = subs_id,
+            day_of_the_week = data.get('day_of_the_week'),
+            start_time = data.get("start_time"),
+            end_time = data.get("end_time")
+        )
+        self.session.add(schedule)
+        self.session.commit()
+        
+    async def use_sub(self, sub_id,client_name):
+        print('name')
+        subscription = self.session.get(Subscription, sub_id)
+        schedules = subscription.schedules
+        schedule_info = [(schedule.day_of_the_week,
+                           schedule.start_time,
+                             schedule.end_time)
+                               for schedule in schedules]
+        print(schedule_info)
+        client =self.session.query(Client).filter(Client.username == client_name).first()
+        with Transaction(self.session) as transaction:
+            client.balance-=subscription.price
+            subscription.is_active = True
 
+            lessons =[]
+            dates = generate_dates(
+                info=schedule_info,
+                count=subscription.total_lessons)
+            for lesson_index in range(subscription.total_lessons):
+                lesson = Lesson(
+                    price = subscription.price//subscription.total_lessons,
+                    date = dates[lesson_index][0],
+                    start_time = dates[lesson_index][1].strftime("%H:%M:%S"),
+                    end_time = dates[lesson_index][2].strftime("%H:%M:%S"),
+                    subscription_id = sub_id,
+                    client_id = client.id,
+                    coach_id = client.coach.id
+                )
+                lessons.append(lesson)
+            self.session.add_all(lessons)
+            
+            # for _ in subscription.total_lessons:
+            #     lesson = Lesson(
 
+            #     )
+        print("Success!")
 clinet_manager = ClientManager()
 
 
 @client_router.get('/info/')
 def client_info(request: Request):
+    # clinet_manager.use_sub()
     return templates.TemplateResponse(
         request=request, name='client.html'
     )

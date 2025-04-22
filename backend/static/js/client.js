@@ -130,12 +130,9 @@ function initializeAllEventHandlers() {
                 return;
             }
             
-            if (!editClientForm.checkValidity()) {
-                alert('Будь ласка, заповніть всі обов\'язкові поля');
-                return;
-            }
+
             
-            const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+            const clientUsername = new URLSearchParams(window.location.search).get('username') || 2;
             
             // Сбор данных из формы
             const nameInput = document.getElementById('editClientName');
@@ -156,7 +153,7 @@ function initializeAllEventHandlers() {
             }
             
             const updatedData = {
-                id: clientId,
+                client_username: clientUsername,
                 name: nameInput.value,
                 username: usernameInput.value,
                 email: emailInput.value,
@@ -169,7 +166,7 @@ function initializeAllEventHandlers() {
                 group_id: groupInput && groupInput.value ? groupInput.value : null,
                 description: descriptionInput ? descriptionInput.value : undefined
             };
-            
+            console.log(` DATATAAAs${updatedData.name}`);
             // Отправка данных на сервер
             if (ws&& ws.readyState === WebSocket.OPEN) {
                 const apiCodes = window.API_CODES || {
@@ -380,30 +377,50 @@ function rebindSubscriptionCardEvents() {
             openEditSubscriptionModal(subscriptionId);
         });
     });
+
+    // Add event listener for the new "Use Subscription" button
+    document.querySelectorAll('.use-subscription-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const subscriptionId = this.getAttribute('data-id');
+            console.log('Use subscription button clicked for subscription:', subscriptionId);
+            useSubscription(subscriptionId);
+        });
+    });
+}
+function useSubscription(subscriptionId) {
+    console.log('Using subscription:', subscriptionId);
+    
+    if (confirm('Ви впевнені, що хочете застосувати цей абонемент?')) {
+        const clientUsername = new URLSearchParams(window.location.search).get('username');
+        
+        // Send data to server
+        if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+            const apiCodes = window.API_CODES || {
+                USE_SUBSCRIPTION: 199,
+                GET_CLIENT_SUBS: 198
+            };
+            
+            ws.send(JSON.stringify({
+                code: apiCodes.USE_SUBSCRIPTION,
+                sub_id: subscriptionId,
+                client_name: clientUsername
+            }));
+            
+            // Update subscriptions data after applying the subscription
+            // setTimeout(() => {
+            //     ws.send(JSON.stringify({
+            //         code: apiCodes.GET_CLIENT_SUBS,
+            //         username: clientUsername
+            //     }));
+            // }, 300);
+            
+        } else {
+            alert('Немає з\'єднання з сервером');
+        }
+    }
 }
 
 // Функция для повторной привязки событий к карточкам уроков
-function rebindLessonCardEvents() {
-    console.log('Rebinding lesson card events');
-    
-    document.querySelectorAll('.cancel-lesson-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const lessonId = this.getAttribute('data-id');
-            console.log('Cancel lesson button clicked for lesson:', lessonId);
-            cancelLesson(lessonId);
-        });
-    });
-    
-    document.querySelectorAll('.edit-lesson-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const lessonId = this.getAttribute('data-id');
-            console.log('Edit lesson button clicked for lesson:', lessonId);
-            viewLessonDetails(lessonId);
-        });
-    });
-}
-
-// Заменяем оригинальную функцию renderSubscriptions
 function renderSubscriptions() {
     console.log('Rendering subscriptions', window.clientSubscriptions);
     const subscriptionsList = document.getElementById('subscriptions-list');
@@ -463,6 +480,7 @@ function renderSubscriptions() {
                 ${scheduleItems || '<p>Розклад не визначено</p>'}
             </div>
             <div class="subscription-actions">
+                <button class="action-button use-subscription-btn" data-id="${subscription.id}">Застосувати</button>
                 <button class="action-button add-schedule-btn" data-id="${subscription.id}">Додати розклад</button>
                 <button class="action-button edit-subscription-btn" data-id="${subscription.id}">Редагувати</button>
             </div>
@@ -471,10 +489,9 @@ function renderSubscriptions() {
         subscriptionsList.appendChild(card);
     });
     
-    // Перепривязывем события для новых карточек
+    // Перепривязываем события для новых карточек
     rebindSubscriptionCardEvents();
 }
-
 // Заменяем оригинальную функцию renderLessons
 function renderLessons(filter = 'all') {
     console.log('Rendering lessons with filter:', filter);
@@ -635,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.groupsData = window.groupsData || [];
     
     // Запускаем инициализацию всех обработчиков событий
-    initializeAllEventHandlers();
+    // initializeAllEventHandlers();
     
     // Проверяем WebSocket соединение
     if (window.ws) {
@@ -1404,7 +1421,7 @@ function cancelLesson(lessonId) {
         // Отправка данных на сервер
         if (window.ws && window.ws.readyState === WebSocket.OPEN) {
             const apiCodes = window.API_CODES || {
-                CANCEL_LESSON: 199,
+                USE_SUBSCRIPTION: 1909,
                 GET_CLIENT_LESSONS: 197
             };
             
@@ -1804,7 +1821,7 @@ function viewLessonDetails(lessonId) {
             UPDATE_SUBSCRIPTION: 299,
             ADD_SCHEDULE: 297,
             DELETE_SCHEDULE: 298,
-            CANCEL_LESSON: 199
+            USE_SUBSCRIPTION: 199
         };
     }
     
