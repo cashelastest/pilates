@@ -1,0 +1,591 @@
+/* Стили для страницы групп */
+:root {
+    /* Основная палитра */
+    --beige-bg: #F5F0E9;
+    --cream: #EFE8DF;
+    --warm-white: #FDFBF8;
+    --terracotta: #E6B5A2;
+    --peach: #FFCDB8;
+    --coral: #E09380;
+    --light-gray: #A0A0A0;
+    --dark-gray: #555555;
+    --almost-black: #333333;
+    --warm-sand: #E8DFD6;
+    --light-wood: #D5C7B8;
+    --soft-pink: #FBEAE2;
+    --cancelled: #E2DCDA;
+    --scheduled: #D7E4D9;
+}
+
+.groups-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.groups-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.groups-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--almost-black);
+}
+
+.groups-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.groups-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.search-container {
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid var(--light-wood);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background-color: var(--warm-white);
+}
+
+.filter-options {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-select {
+    padding: 10px;
+    border: 1px solid var(--light-wood);
+    border-radius: 8px;
+    background-color: var(--warm-white);
+    min-width: 150px;
+}
+
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.group-card {
+    background-color: var(--warm-white);
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.group-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--almost-black);
+}
+
+.group-status {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.group-status.active {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.group-status.inactive {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.group-details {
+    margin-bottom: 15px;
+}
+
+.detail-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.detail-label {
+    width: 150px;
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.detail-value {
+    color: var(--almost-black);
+}
+
+.group-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.action-button {
+    background-color: var(--terracotta);
+    color: var(--warm-white);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+}
+
+.action-button:hover {
+    background-color: var(--coral);
+}
+
+/* Модальные окна */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-container {
+    background-color: var(--warm-white);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--light-wood);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--almost-black);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--dark-gray);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid var(--light-wood);
+}
+
+/* Формы внутри модальных окон */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--light-wood);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background-color: var(--warm-white);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--terracotta);
+    color: var(--warm-white);
+}
+
+.btn-primary:hover {
+    background-color: var(--coral);
+}
+
+.btn-secondary {
+    background-color: var(--light-gray);
+    color: var(--warm-white);
+}
+
+.btn-secondary:hover {
+    background-color: var(--dark-gray);
+}
+
+.btn-danger {
+    background-color: #f44336;
+    color: var(--warm-white);
+}
+
+.btn-danger:hover {
+    background-color: #d32f2f;
+}
+
+/* Детали группы */
+.group-info-section {
+    margin-bottom: 20px;
+    background-color: var(--beige-bg);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.detail-label {
+    width: 180px;
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.detail-value {
+    flex: 1;
+    color: var(--almost-black);
+}
+
+.detail-value.description {
+    white-space: pre-line;
+}
+
+.status-active {
+    color: #4caf50;
+    font-weight: 500;
+}
+
+.status-inactive {
+    color: #f44336;
+    font-weight: 500;
+}
+
+/* Вкладки в деталях группы */
+.group-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--light-wood);
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    color: var(--dark-gray);
+    transition: color 0.3s ease;
+}
+
+.tab-button:hover {
+    color: var(--coral);
+}
+
+.tab-button.active {
+    color: var(--coral);
+}
+
+.tab-button.active:after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--coral);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.panel-actions {
+    margin-bottom: 15px;
+}
+
+.list-container {
+    background-color: var(--beige-bg);
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 200px;
+}
+
+.lessons-filter {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.lessons-filter label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+/* Список участников */
+.member-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: var(--warm-white);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--terracotta);
+    color: var(--warm-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+    font-size: 1.1rem;
+}
+
+.member-name {
+    font-weight: 500;
+    color: var(--almost-black);
+}
+
+.remove-member {
+    background: none;
+    border: none;
+    color: #f44336;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.remove-member:hover {
+    opacity: 1;
+}
+
+/* Список занятий */
+.lesson-card {
+    background-color: var(--warm-white);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--terracotta);
+}
+
+.lesson-card.completed {
+    border-left-color: #4caf50;
+}
+
+.lesson-card.cancelled {
+    border-left-color: #f44336;
+    opacity: 0.7;
+}
+
+.lesson-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.lesson-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--almost-black);
+}
+
+.lesson-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.lesson-status.scheduled {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+}
+
+.lesson-status.completed {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.lesson-status.cancelled {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+}
+
+.lesson-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.lesson-detail {
+    flex: 1;
+    min-width: 150px;
+}
+
+.detail-title {
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+    margin-bottom: 5px;
+}
+
+.detail-value-sub {
+    font-weight: 500;
+    color: var(--almost-black);
+}
+
+.lesson-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.lesson-actions .action-button {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+}
+
+/* Пустые состояния */
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: var(--light-gray);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Адаптивность */
+@media screen and (max-width: 768px) {
+    .groups-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .groups-filters {
+        flex-direction: column;
+    }
+    
+    .filter-options {
+        width: 100%;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .modal-container {
+        width: 95%;
+    }
+}
