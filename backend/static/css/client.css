@@ -482,7 +482,79 @@
     font-size: 0.8rem;
     padding: 5px 10px;
 }
+/* Стили для модального окна назначения абонемента */
+.modal-form-separator {
+    margin: 20px 0;
+    border-top: 1px solid var(--light-wood);
+}
 
+.schedules-container {
+    margin-bottom: 15px;
+}
+
+.schedule-item-row {
+    display: flex;
+    align-items: center;
+    background-color: var(--beige-bg);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+}
+
+.schedule-info {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+}
+
+.schedule-day {
+    font-weight: 500;
+    min-width: 100px;
+}
+
+.schedule-time {
+    color: var(--dark-gray);
+}
+
+.remove-schedule-btn {
+    background: none;
+    border: none;
+    color: #f44336;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.remove-schedule-btn:hover {
+    color: #d32f2f;
+}
+
+.schedule-input-container {
+    background-color: var(--beige-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.schedule-input-container .form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.schedule-input-container .form-row .form-group {
+    flex: 1;
+}
+
+.schedule-input-container .btn {
+    margin-top: 10px;
+}
+
+.no-schedules-message {
+    font-style: italic;
+    color: var(--light-gray);
+    text-align: center;
+    padding: 10px;
+}
 /* Адаптивные стили для кнопок */
 @media screen and (max-width: 768px) {
     .client-actions {

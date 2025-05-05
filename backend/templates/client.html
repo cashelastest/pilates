@@ -16,9 +16,9 @@
         <span class="left-part">Pilates Studio</span>
         <nav>
             <ul>
-                <li><a href="index.html">Дошка</a></li>
+                <li><a href="/dashboard/">Дошка</a></li>
                 <li><a href="coaches.html">Тренери</a></li>
-                <li class="active-page"><a href="clients.html">Клієнти</a></li>
+                <li class="active-page"><a href="/clients/">Клієнти</a></li>
                 <li><a href="stats.html">Статистика</a></li>
             </ul>
         </nav>
@@ -30,16 +30,16 @@
             </div>
         </div>
         <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
+            <a href="/dashboard/" class="dropdown-item">Дошка</a>
             <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
+            <a href="/clients/" class="dropdown-item">Клієнти</a>
             <a href="stats.html" class="dropdown-item">Статистика</a>
         </div>
     </header>
 
     <main class="client-container">
         <div class="back-button">
-            <a href="clients.html">&larr; Повернутися до списку клієнтів</a>
+            <a href="/clients/">&larr; Повернутися до списку клієнтів</a>
         </div>
         
         <div class="client-header">
@@ -251,29 +251,37 @@
         </div>
     </div>
 
-    <!-- Модальное окно для назначения абонемента клиенту -->
-    <div id="assignSubscriptionModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 class="modal-title">Призначення абонементу</h3>
-                <button class="modal-close" id="closeAssignSubModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="assignSubForm">
-                    <div class="form-group">
-                        <label for="subSelect">Абонемент</label>
-                        <select class="form-control" id="subSelect" required>
-                            <option value="">Оберіть абонемент</option>
-                            <!-- Will be populated from API -->
-                        </select>
-                    </div>
-                    <div class="modal-form-separator"></div>
-                    <div class="form-group">
-                        <label>Розклад для абонементу</label>
-                    </div>
+    
+<div id="assignSubscriptionModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">Призначення абонементу</h3>
+            <button class="modal-close" id="closeAssignSubModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="assignSubForm">
+                <div class="form-group">
+                    <label for="subSelect">Абонемент</label>
+                    <select class="form-control" id="subSelect" required>
+                        <option value="">Оберіть абонемент</option>
+                        <!-- Will be populated from API -->
+                    </select>
+                </div>
+                <div class="modal-form-separator"></div>
+                <div class="form-group">
+                    <label>Розклад для абонементу</label>
+                </div>
+                
+                <!-- Контейнер для добавленных расписаний -->
+                <div id="schedulesContainer" class="schedules-container">
+                    <!-- Здесь будут добавляться расписания -->
+                </div>
+                
+                <!-- Контейнер для добавления нового расписания -->
+                <div class="schedule-input-container">
                     <div class="form-group">
                         <label>День тижня</label>
-                        <select class="form-control" id="dayOfWeekSelect" required>
+                        <select class="form-control" id="newScheduleDaySelect">
                             <option value="">Оберіть день тижня</option>
                             <option value="0">Понеділок</option>
                             <option value="1">Вівторок</option>
@@ -286,22 +294,24 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="startTimeInput">Час початку</label>
-                            <input type="time" class="form-control" id="startTimeInput" required>
+                            <label for="newScheduleStartTime">Час початку</label>
+                            <input type="time" class="form-control" id="newScheduleStartTime">
                         </div>
                         <div class="form-group">
-                            <label for="endTimeInput">Час закінчення</label>
-                            <input type="time" class="form-control" id="endTimeInput" required>
+                            <label for="newScheduleEndTime">Час закінчення</label>
+                            <input type="time" class="form-control" id="newScheduleEndTime">
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelAssignSubBtn">Скасувати</button>
-                <button type="button" class="btn btn-primary" id="saveAssignSubBtn">Призначити</button>
-            </div>
+                    <button type="button" class="btn btn-secondary" id="addScheduleToListBtn">Додати розклад</button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelAssignSubBtn">Скасувати</button>
+            <button type="button" class="btn btn-primary" id="saveAssignSubBtn">Призначити</button>
         </div>
     </div>
+</div>
 
     <script src="{{url_for('static',path = '/js/menu.js')}}"></script>
     <script src="{{url_for('static',path = '/js/api-codes.js')}}"></script>

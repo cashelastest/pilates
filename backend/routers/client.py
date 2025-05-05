@@ -7,6 +7,7 @@ from models import Client, Lesson, Coach, Subscription, SubscriptionSchedule
 from datetime import datetime
 import time
 from utils import check_is_used_lesson,generate_dates
+import string
 client_router = APIRouter(prefix='/client', tags = ['client'])
 templates = Jinja2Templates(directory='templates')
 
@@ -47,7 +48,6 @@ class ClientManager(Manager):
             "date_of_birth":datetime.strftime(client.date_of_birth, "%Y-%m-%d"),
             "sex":client.sex,
             "coach_name":client.coach.name,
-            "group_name":client.group.name,
             "description":client.description
             }
         }
@@ -56,14 +56,13 @@ class ClientManager(Manager):
 
 
     async def get_subs(self, ws:WebSocket, username:str):
-        print(username)
-        client = self.session.query(Client).filter(Client.username == username).first()
+        client = self.session.query(Client).filter(Client.username ==username).first()
         subs = client.subscriptions
-        all_subs = self.session.query(Subscription.id, Subscription.name).all()
-
+        all_subs = self.session.query(Subscription).all()
+        # print(list(all_subs))
         subs_data = [{
             "id":subscription.id,
-            "name":subscription.name} 
+            "name":subscription.template.name} 
               for subscription in all_subs]
         data = []
 
@@ -73,12 +72,12 @@ class ClientManager(Manager):
             data.append(
                 {
                 "id":subscription.id,
-                "name":subscription.name,
-                "price":subscription.price,
-                'total_lessons': subscription.total_lessons,
+                "name":subscription.template.name,
+                "price":subscription.template.price,
+                'total_lessons': subscription.template.total_lessons,
                 'used_lessons': used_lessons,
-                'valid_until': datetime.strftime(subscription.valid_until, "%Y-%m-%d"),
-                'is_active': subscription.total_lessons>used_lessons,
+                'valid_until': datetime.strftime(subscription.template.valid_until, "%Y-%m-%d"),
+                'is_active': subscription.template.total_lessons>used_lessons,
                 "schedules": [
                     {
                     'id':schedule.id,
@@ -94,7 +93,55 @@ class ClientManager(Manager):
                 "all_subscriptions":subs_data
             }
         }
+        print(response)
         await ws.send_json(response)
+
+    async def add_subscription_to_user(self, data:dict):
+
+        try:
+           template_id = int(data.get("template"))
+        except ValueError:
+            print('ERROR template_id is not an int type')
+            return
+
+        subscription = Subscription(
+            template_id = template_id,
+            client_id = data.get("client_id")
+        )
+
+        self.session.add(subscription)
+        self.session.flush()
+
+
+        schedules = [SubscriptionSchedule(
+            subscription_id = subscription.id,
+                start_time = schedule_data.get("start_time"),
+                end_time = schedule_data.get("end_time"),
+                day_of_the_week = schedule_data.get("day_of_the_week")
+            ) for schedule_data in data.get('schedules') ]
+        self.session.add_all(schedules)
+        schedule_data = list(tuple(schedule.values()) for schedule in data.get("schedules"))
+        lessons =[]
+        dates = generate_dates(
+            info=schedule_data,
+            count=subscription.template.total_lessons)
+        for lesson_index in range(subscription.template.total_lessons):
+            lesson = Lesson(
+                price = subscription.template.price//subscription.template.total_lessons,
+                date = dates[lesson_index][0],
+                start_time = datetime.strptime(dates[lesson_index][1],"%H:%M"),
+                end_time = datetime.strptime(dates[lesson_index][2],"%H:%M"),
+                is_used= False,
+                subscription_id = subscription.id,
+                client_id = data.get("client_id"),
+                coach_id = subscription.template.coach.id
+            )
+            lessons.append(lesson)
+        self.session.add_all(lessons)
+        self.session.commit()
+        print(f"generated {len(lessons)} lessons")
+        return True
+
     async def fetch_client_lessons(self, ws:WebSocket, username : str):
         client = self.session.query(Client).filter(Client.username == username).first()
         lessons = client.lessons

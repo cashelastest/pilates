@@ -1,4 +1,266 @@
 // Основная функция инициализации для всех обработчиков событий
+window.tempSchedules = [];
+
+function openAssignSubscriptionModal() {
+    console.log('Opening assign subscription modal');
+    const assignSubscriptionModal = document.getElementById('assignSubscriptionModal');
+    
+    if (!assignSubscriptionModal) {
+        console.error('Assign subscription modal not found!');
+        return;
+    }
+    
+    // Очищаем временный массив расписаний
+    window.tempSchedules = [];
+    
+    // По умолчанию установим текущее время + 1 час для полей добавления расписания
+    const now = new Date();
+    const startTimeInput = document.getElementById('newScheduleStartTime');
+    const endTimeInput = document.getElementById('newScheduleEndTime');
+    
+    if (startTimeInput && endTimeInput) {
+        startTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:00`;
+        endTimeInput.value = `${String(now.getHours() + 1).padStart(2, '0')}:30`;
+    } else {
+        console.warn('Time inputs not found!');
+    }
+    
+    // Обновляем отображение пустого списка расписаний
+    renderSchedulesList();
+    
+    // Открываем модальное окно
+    assignSubscriptionModal.classList.add('active');
+}
+function closeAssignSubModal() {
+    console.log('Closing assign sub modal');
+    const assignSubscriptionModal = document.getElementById('assignSubscriptionModal');
+    
+    if (!assignSubscriptionModal) {
+        console.error('Assign subscription modal not found when trying to close it!');
+        return;
+    }
+    
+    assignSubscriptionModal.classList.remove('active');
+    
+    const assignSubForm = document.getElementById('assignSubForm');
+    if (assignSubForm) {
+        assignSubForm.reset();
+    }
+    
+    // Очищаем временный массив расписаний
+    window.tempSchedules = [];
+}
+
+function saveAssignSubscription() {
+    console.log('Save assign sub button clicked');
+    const assignSubForm = document.getElementById('assignSubForm');
+    
+    if (!assignSubForm) {
+        console.error('Assign sub form not found!');
+        return;
+    }
+    
+    const subSelectInput = document.getElementById('subSelect');
+    
+    if (!subSelectInput || !subSelectInput.value) {
+        alert('Будь ласка, оберіть абонемент');
+        return;
+    }
+    
+    // Проверяем, добавлено ли хотя бы одно расписание
+    if (window.tempSchedules.length === 0) {
+        alert('Будь ласка, додайте хоча б один розклад');
+        return;
+    }
+    
+    const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+    
+    // Формирование данных для отправки
+    const subscriptionData = {
+        client_id: clientId,
+        template: subSelectInput.value,
+        schedules: window.tempSchedules
+    };
+    
+    console.log('Subscription data to send:', subscriptionData);
+    
+    // Отправка данных на сервер
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const apiCodes = window.API_CODES || {
+            ASSIGN_SUB_TO_CLIENT: 196,
+            GET_CLIENT_SUBS: 198
+        };
+        
+        ws.send(JSON.stringify({
+            code: apiCodes.ASSIGN_SUB_TO_CLIENT,
+            data: subscriptionData
+        }));
+        
+        // Закрываем модальное окно
+        closeAssignSubModal();
+        
+        // Обновляем данные абонементов
+        ws.send(JSON.stringify({
+            code: apiCodes.GET_CLIENT_SUBS,
+            id: clientId
+        }));
+    } else {
+        alert('Немає з\'єднання з сервером');
+    }
+}
+
+// Функция для добавления всех необходимых обработчиков событий
+function initializeAssignSubscriptionHandlers() {
+    console.log('Initializing assign subscription handlers');
+    
+    // Кнопка назначения абонемента
+    const assignSubscriptionBtn = document.getElementById('assignSubscriptionBtn');
+    if (assignSubscriptionBtn) {
+        assignSubscriptionBtn.addEventListener('click', openAssignSubscriptionModal);
+    }
+    
+    // Дублирование кнопки добавления абонемента
+    const addSubscriptionBtn = document.getElementById('addSubscriptionBtn');
+    if (addSubscriptionBtn) {
+        addSubscriptionBtn.addEventListener('click', function() {
+            if (assignSubscriptionBtn) {
+                assignSubscriptionBtn.click();
+            } else {
+                openAssignSubscriptionModal();
+            }
+        });
+    }
+    
+    // Кнопки закрытия модального окна назначения абонемента
+    const closeAssignSubModalBtn = document.getElementById('closeAssignSubModal');
+    if (closeAssignSubModalBtn) {
+        closeAssignSubModalBtn.addEventListener('click', closeAssignSubModal);
+    }
+    
+    const cancelAssignSubBtn = document.getElementById('cancelAssignSubBtn');
+    if (cancelAssignSubBtn) {
+        cancelAssignSubBtn.addEventListener('click', closeAssignSubModal);
+    }
+    
+    // Закрытие по клику на фон
+    const assignSubscriptionModal = document.getElementById('assignSubscriptionModal');
+    if (assignSubscriptionModal) {
+        assignSubscriptionModal.addEventListener('click', function(e) {
+            if (e.target === assignSubscriptionModal) {
+                closeAssignSubModal();
+            }
+        });
+    }
+    
+    // Кнопка добавления расписания
+    const addScheduleToListBtn = document.getElementById('addScheduleToListBtn');
+    if (addScheduleToListBtn) {
+        addScheduleToListBtn.addEventListener('click', addScheduleToList);
+    }
+    
+    // Сохранение назначения абонемента
+    const saveAssignSubBtn = document.getElementById('saveAssignSubBtn');
+    if (saveAssignSubBtn) {
+        saveAssignSubBtn.addEventListener('click', saveAssignSubscription);
+    }
+}
+
+// Добавляем вызов функции инициализации при загрузке DOM
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAssignSubscriptionHandlers();
+});
+// Функция для отображения добавленных расписаний
+function renderSchedulesList() {
+    const schedulesContainer = document.getElementById('schedulesContainer');
+    
+    if (!schedulesContainer) {
+        console.error('Schedules container not found');
+        return;
+    }
+    
+    if (window.tempSchedules.length === 0) {
+        schedulesContainer.innerHTML = '<div class="no-schedules-message">Розклад не додано</div>';
+        return;
+    }
+    
+    schedulesContainer.innerHTML = '';
+    
+    window.tempSchedules.forEach((schedule, index) => {
+        const dayName = getDayOfWeekName(schedule.day_of_the_week);
+        
+        const scheduleItem = document.createElement('div');
+        scheduleItem.className = 'schedule-item-row';
+        scheduleItem.innerHTML = `
+            <div class="schedule-info">
+                <span class="schedule-day">${dayName}</span>
+                <span class="schedule-time">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</span>
+            </div>
+            <button type="button" class="remove-schedule-btn" data-index="${index}">&times;</button>
+        `;
+        
+        schedulesContainer.appendChild(scheduleItem);
+    });
+    
+    // Привязываем события к кнопкам удаления
+    document.querySelectorAll('.remove-schedule-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            removeScheduleFromList(index);
+        });
+    });
+}
+
+
+function addScheduleToList() {
+    const daySelect = document.getElementById('newScheduleDaySelect');
+    const startTimeInput = document.getElementById('newScheduleStartTime');
+    const endTimeInput = document.getElementById('newScheduleEndTime');
+    
+    if (!daySelect || !startTimeInput || !endTimeInput) {
+        console.error('Schedule inputs not found');
+        return;
+    }
+    
+    const day = daySelect.value;
+    const startTime = startTimeInput.value;
+    const endTime = endTimeInput.value;
+    
+    // Проверяем заполнены ли все поля
+    if (!day || !startTime || !endTime) {
+        alert('Будь ласка, заповніть всі поля розкладу');
+        return;
+    }
+    
+    // Проверяем корректность времени
+    if (startTime >= endTime) {
+        alert('Час початку повинен бути раніше часу закінчення');
+        return;
+    }
+    
+    // Добавляем в массив расписаний
+    window.tempSchedules.push({
+        day_of_the_week: parseInt(day),
+        start_time: startTime,
+        end_time: endTime
+    });
+    
+    // Обновляем отображение
+    renderSchedulesList();
+    
+    // Очищаем поля формы
+    daySelect.value = '';
+    startTimeInput.value = '';
+    endTimeInput.value = '';
+}
+
+// Функция для удаления расписания из списка
+function removeScheduleFromList(index) {
+    if (index >= 0 && index < window.tempSchedules.length) {
+        window.tempSchedules.splice(index, 1);
+        renderSchedulesList();
+    }
+}
+
 function initializeAllEventHandlers() {
     console.log('Initializing all event handlers...');
     
@@ -355,7 +617,7 @@ function initializeAllEventHandlers() {
     
     // Перепривязываем события к карточкам
     rebindSubscriptionCardEvents();
-    rebindLessonCardEvents();
+
 }
 
 // Функция для повторной привязки событий к карточкам абонементов
@@ -586,7 +848,7 @@ function renderLessons(filter = 'all') {
     });
     
     // Перепривязываем события к новым карточкам
-    rebindLessonCardEvents();
+
 }
 
 // Улучшенная обработка сообщений WebSocket

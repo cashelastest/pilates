@@ -602,6 +602,79 @@
     gap: 15px;
 }
 
+.add-client-modal {
+    background-color: white;
+}
+
+/* Make sure the modal overlay works correctly */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Form styles for better visibility */
+.form-input, 
+.form-select, 
+.form-textarea {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.form-label {
+    color: #333;
+    font-weight: 500;
+}
+
+/* Add these styles to ensure the modals display correctly */
+.client-modal {
+    background-color: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header,
+.modal-footer,
+.client-info {
+    background-color: white;
+}
+
+/* Force solid white background for all modal elements */
+.modal-overlay.active .client-modal,
+.modal-overlay.active .client-modal * {
+    background-color: white;
+}
+
+/* Only exception for specific UI elements that need different colors */
+.modal-overlay.active .client-modal .status-indicator,
+.modal-overlay.active .client-modal .progress-bar,
+.modal-overlay.active .client-modal .save-btn {
+    background-color: var(--peach);
+}
+
+.modal-overlay.active .client-modal .cancel-btn {
+    background-color: var(--warm-white);
+}
 @media screen and (max-width: 600px) {
     .client-profile {
         flex-direction: column;

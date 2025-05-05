@@ -536,7 +536,7 @@ function saveGroup() {
     
     if (window.ws && window.ws.readyState === WebSocket.OPEN) {
         window.ws.send(JSON.stringify({
-            code: groupId ? GROUP_API_CODES.UPDATE_GROUP : GROUP_API_CODES.CREATE_GROUP,
+            code: GROUP_API_CODES.CREATE_GROUP,
             group: groupData
         }));
     } else {
@@ -747,7 +747,6 @@ function addLessonToGroup() {
     
     const lesson = {
         id: generateLessonId(),
-        title: title,
         date: date,
         start_time: startTime + ':00',
         end_time: endTime + ':00',
@@ -894,11 +893,11 @@ function viewLessonDetails(lessonId) {
     if (!currentGroup) return;
     
     // Находим занятие по ID
-    const lessons = MOCK_GROUP_LESSONS[currentGroup.id] || [];
     const lesson = lessons.find(l => l.id === lessonId);
     
     if (!lesson) {
         console.error('Занятие с ID ' + lessonId + ' не найдено');
+        console.log(`tаа${lessons}`)
         return;
     }
     

@@ -6,8 +6,9 @@ from fastapi.templating import Jinja2Templates
 from routers.client import Manager
 from models import Group, Client, ClientGroupAssociation, Coach, Lesson
 from datetime import datetime
-templates = Jinja2Templates(directory='templates')
 
+
+templates = Jinja2Templates(directory='templates')
 group_router = APIRouter(prefix='/group', tags=['group'])
 
 
@@ -37,6 +38,7 @@ class GroupManager(Manager):
         await ws.send_json({"code":310, "data":data})
         return True
     
+    
     async def get_group_details(self, id:int, ws:WebSocket):
         group = self.session.get(Group, id)
         data = {
@@ -46,13 +48,14 @@ class GroupManager(Manager):
             "status" : group.status,
             "members_count":len(group.clients),
             "description":group.description,
-
         }
         await ws.send_json({"code":311, "data":data})
+
         members=[
               {"id":member.id, "name":member.name} for member in group.clients
           ]
         await ws.send_json({'code':312, 'data':members})
+
         unique_lessons = {
             f"{lesson.date}_{lesson.start_time}_{lesson.end_time}":
             {"id":lesson.id,
@@ -65,19 +68,10 @@ class GroupManager(Manager):
                 "is_cancelled":lesson.is_cancelled
                 }  for lesson in group.lessons
         }
-        # lessons=[
-        #        {"id":lesson.id,
-        #         "title":lesson.coach.name +datetime.strftime(lesson.date, "%Y-%m-%d") ,
-        #         "date":datetime.strftime(lesson.date, "%Y-%m-%d"), 
-        #         "start_time":lesson.start_time.strftime("%H:%M:%S"),
-        #         "end_time":lesson.end_time.strftime("%H:%M:%S"),
-        #         "coach_name":lesson.coach.name,
-        #         "price":lesson.price,
-        #         "is_cancelled":lesson.is_cancelled
-        #         } for lesson in group.lessons
-        #   ]
         await ws.send_json({"code":313,"data":list(unique_lessons.values())})
         return True
+    
+
     async def get_clients(self, ws:WebSocket):
         clients = self.session.query(Client).all()
         data = [{"id":client.id, "name":client.name} for client in clients]
@@ -100,6 +94,20 @@ class GroupManager(Manager):
         return True
 
 
+    async def delete_member(self, data)->bool|None:
+        client_id = data.get("client_id")
+        group_id = data.get("group_id")
+        print(f"{client_id=} {group_id=}")
+        client_to_delete = self.session.query(ClientGroupAssociation).filter(
+            (ClientGroupAssociation.client_id == client_id) &
+            (ClientGroupAssociation.group_id == group_id)
+            ).first()
+        if client_to_delete:
+            self.session.delete(client_to_delete)
+            self.session.commit()
+            return True
+
+
     async def update_group(self, group_info):
         group = self.session.get(Group, group_info.get("id"))
         if not group:
@@ -111,6 +119,7 @@ class GroupManager(Manager):
         self.session.commit()
         return True
     
+
     async def add_lesson_for_group(self, data):
         group = self.session.get(Group, data.get("group_id"))
         lesson_info = data.get("lesson")
@@ -126,17 +135,44 @@ class GroupManager(Manager):
                 group_id = group.id,
                 is_cancelled = False,
             )
-        
             lessons.append(lesson)
         self.session.add_all(lessons)
         self.session.commit()
         return True
     
+
+    async def cancel_lesson(self,lesson_id:int):
+        lesson = self.session.get(Lesson, lesson_id)
+        lesson.is_cancelled = True
+        self.session.commit()
+
+
     async def get_coaches(self, ws:WebSocket):
         coaches = self.session.query(Coach).all()
         data = [{"id":coach.id, "name":coach.name} for coach in coaches]
         await ws.send_json({"code":315, "data":data})
         return True
+
+    
+    async def delete_group(self, group_id:int)->bool|None:
+        group_to_delete = self.session.get(Group, group_id)
+        if group_to_delete:
+            self.session.delete(group_to_delete)
+            self.session.commit()
+            return True
+        
+    async def create_group(self, data):
+        # if not all(data.get(key) for key in ['name', 'coach_id','coach_name', 'status', 'description']):
+        #     return
+        group = Group(
+            name = data.get("name"),
+            coach_id = data.get("coach_id"),
+            status = data.get("status"),
+            description = data.get("description")
+        )
+        self.session.add(group)
+        self.session.commit()
+
 
 @group_router.get("/")
 def get_groups(request:Request):

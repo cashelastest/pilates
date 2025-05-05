@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Клієнти - Pilates Studio CRM</title>
-    <!-- <link rel="stylesheet" href="clients.css"> -->
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/clients.css">
-
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/clients.css')}}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -15,18 +13,16 @@
 <body>
     
     <header class="header-block">
-                
-
         <span class="left-part">Pilates Studio</span>
         <nav>
             <ul>
-                <li ><a href="index.html">Дошка</a></li>
-                <li ><a href="coaches.html">Тренери</a></li>
+                <li><a href="index.html">Дошка</a></li>
+                <li><a href="coaches.html">Тренери</a></li>
                 <li class="active-page"><a href="clients.html">Клієнти</a></li>
-                <li ><a href="stats.html">Статистика</a></li>
+                <li><a href="stats.html">Статистика</a></li>
             </ul>
         </nav>
-        <div class="menu-btn" aria-label="Открыть меню">
+        <div class="menu-btn" aria-label="Відкрити меню">
             <div class="hamburger">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -39,7 +35,6 @@
             <a href="clients.html" class="dropdown-item">Клієнти</a>
             <a href="stats.html" class="dropdown-item">Статистика</a>
             <a href="logout.html" class="dropdown-item">Вихід</a>
-
         </div>
     </header>
 
@@ -48,13 +43,13 @@
             <div class="clients-header">
                 <h1 class="clients-title">Клієнти</h1>
                 <div class="clients-actions">
-                    <button class="action-btn">
+                    <button class="action-btn" id="addClientBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19M5 12H19" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <span>Додати клієнта</span>
                     </button>
-                    <button class="action-btn">
+                    <button class="action-btn" id="exportClientsBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 15L12 3M12 3L16 7M12 3L8 7M8 21H16" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -84,152 +79,13 @@
                         <th>Дії</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr  data-id="1">
-                        <td>
-                            <div class="client-name">
-                                <div class="client-avatar">ОК</div>
-                                Олена Ковальчук
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-indicator status-active"></span>
-                            Активний
-                        </td>
-                        <td>12.04.2025</td>
-                        <td>16 з 20</td>
-                        <td>Дійсний до 30.04.2025</td>
-                        <td class="client-actions">
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">
-                                <div class="client-avatar">МГ</div>
-                                Максим Гончаренко
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-indicator status-active"></span>
-                            Активний
-                        </td>
-                        <td>11.04.2025</td>
-                        <td>5 з 10</td>
-                        <td>Дійсний до 15.05.2025</td>
-                        <td class="client-actions">
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">
-                                <div class="client-avatar">ВП</div>
-                                Валерія Павленко
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-indicator status-inactive"></span>
-                            Неактивний
-                        </td>
-                        <td>25.03.2025</td>
-                        <td>10 з 10</td>
-                        <td>Закінчився 01.04.2025</td>
-                        <td class="client-actions">
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">
-                                <div class="client-avatar">ІС</div>
-                                Ірина Степаненко
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-indicator status-active"></span>
-                            Активний
-                        </td>
-                        <td>10.04.2025</td>
-                        <td>3 з 8</td>
-                        <td>Дійсний до 10.05.2025</td>
-                        <td class="client-actions">
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">
-                                <div class="client-avatar">ОБ</div>
-                                Олег Бондаренко
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-indicator status-active"></span>
-                            Активний
-                        </td>
-                        <td>08.04.2025</td>
-                        <td>2 з 12</td>
-                        <td>Дійсний до 08.06.2025</td>
-                        <td class="client-actions">
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="client-action-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
+                <tbody id="clientsTableBody">
+                    <!-- Здесь будут динамически добавляться данные клиентов с сервера -->
                 </tbody>
             </table>
             
             <div class="pagination">
-                <div class="page-nav">
+                <div class="page-nav" id="prevPage">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M15 18L9 12L15 6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -237,7 +93,7 @@
                 <div class="page-btn active">1</div>
                 <div class="page-btn">2</div>
                 <div class="page-btn">3</div>
-                <div class="page-nav">
+                <div class="page-nav" id="nextPage">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M9 6L15 12L9 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -245,220 +101,278 @@
             </div>
         </div>
     </main>
-<div class="modal-overlay" id="clientModal">
-    <div class="client-modal">
+    
+    <!-- Модальное окно для просмотра/редактирования клиента -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="client-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Інформація про клієнта</h2>
+                <button class="modal-close" id="closeModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="info">Інформація</div>
+                <div class="tab" data-tab="membership">Абонемент</div>
+                <div class="tab" data-tab="history">Історія</div>
+                <div class="tab" data-tab="edit">Редагувати</div>
+            </div>
+            
+            <div class="client-info">
+                <!-- Вкладка информации -->
+                <div class="tab-content active" id="info-tab">
+                    <div class="client-profile">
+                        <div class="client-big-avatar" id="clientAvatar">ІК</div>
+                        <div class="client-details">
+                            <h2 id="clientName">Ім'я клієнта</h2>
+                            <div class="client-contact" id="clientPhone">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 5C3 3.89543 3.89543 3 5 3H8.27924C8.70967 3 9.09181 3.27543 9.22792 3.68377L10.7257 8.17721C10.8831 8.64932 10.6694 9.16531 10.2243 9.38787L7.96701 10.5165C9.06925 12.9612 11.0388 14.9308 13.4835 16.033L14.6121 13.7757C14.8347 13.3306 15.3507 13.1169 15.8228 13.2743L20.3162 14.7721C20.7246 14.9082 21 15.2903 21 15.7208V19C21 20.1046 20.1046 21 19 21H18C9.71573 21 3 14.2843 3 6V5Z" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Телефон
+                            </div>
+                            <div class="client-contact" id="clientEmail">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 8L10.8906 13.2604C11.5624 13.7083 12.4376 13.7083 13.1094 13.2604L21 8M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Email
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Персональні дані</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Дата народження</div>
+                                <div class="info-value" id="clientBirthDate">--.--.----</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Стать</div>
+                                <div class="info-value" id="clientGender">Жіноча</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Клієнт з</div>
+                                <div class="info-value" id="clientSince">--.--.----</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Статус</div>
+                                <div class="info-value" id="clientStatus">
+                                    <span class="status-indicator status-active"></span>
+                                    Активний
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Коментарі</h3>
+                        <div class="info-value" id="clientComments">
+                            Коментарі до клієнта будуть тут.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка абонемента -->
+                <div class="tab-content" id="membership-tab">
+                    <div class="membership-card" id="activeSubscription">
+                        <div class="membership-header">
+                            <div class="membership-title" id="subscriptionTitle">Абонемент на 20 занять</div>
+                            <div class="membership-status" id="subscriptionStatus">Активний</div>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Дата початку</div>
+                                <div class="info-value" id="subscriptionStartDate">--.--.----</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Дійсний до</div>
+                                <div class="info-value" id="subscriptionEndDate">--.--.----</div>
+                            </div>
+                        </div>
+                        <div class="membership-progress">
+                            <div class="progress-label">
+                                <span>Використано занять</span>
+                                <span id="subscriptionProgress">0 з 0</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Історія абонементів</h3>
+                        <div id="subscriptionsHistory">
+                            <!-- Здесь будет динамически добавляться история абонементов -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка истории -->
+                <div class="tab-content" id="history-tab">
+                    <div class="info-section">
+                        <h3>Останні заняття</h3>
+                        <div id="lessonsHistory">
+                            <!-- Здесь будет динамически добавляться история занятий -->
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Платежі</h3>
+                        <div id="paymentsHistory">
+                            <!-- Здесь будет динамически добавляться история платежей -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка редактирования -->
+                <div class="tab-content" id="edit-tab">
+                    <form id="editClientForm">
+                        <input type="hidden" id="clientId" name="clientId">
+                        <input type="hidden" id="clientUsername" name="clientUsername">
+                        
+                        <div class="form-row">
+                            <label class="form-label">Ім'я та прізвище</label>
+                            <input type="text" class="form-input" id="editFullName" name="fullName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label class="form-label">Телефон</label>
+                                <input type="tel" class="form-input" id="editPhone" name="phone">
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="editEmail" name="email">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label class="form-label">Дата народження</label>
+                                <input type="date" class="form-input" id="editBirthDate" name="birthdate">
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Стать</label>
+                                <select class="form-select" id="editGender" name="gender">
+                                    <option value="female">Жіноча</option>
+                                    <option value="male">Чоловіча</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label class="form-label">Тренер</label>
+                                <select class="form-select" id="editCoach" name="coach">
+                                    <option value="">Не призначено</option>
+                                    <!-- Будет заполнено динамически -->
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" id="editStatus" name="status">
+                                    <option value="active">Активний</option>
+                                    <option value="inactive">Неактивний</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">Коментарі</label>
+                            <textarea class="form-textarea" id="editComments" name="comments"></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn cancel-btn" id="cancelEdit">Скасувати</button>
+                <button class="modal-btn save-btn" id="saveClient">Зберегти</button>
+            </div>
+        </div>
+    </div>
+    <!-- Replace the existing add client modal section with this code -->
+<!-- Модальное окно для добавления нового клиента -->
+<div class="modal-overlay" id="addClientModal">
+    <div class="client-modal add-client-modal"> <!-- Changed class to use existing styling -->
         <div class="modal-header">
-            <h2 class="modal-title">Информация о клиенте</h2>
-            <button class="modal-close" id="closeModal">
+            <h2 class="modal-title">Додати нового клієнта</h2>
+            <button class="modal-close" id="closeAddModal">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 6L6 18M6 6L18 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" data-tab="info">Информация</div>
-            <div class="tab" data-tab="membership">Абонемент</div>
-            <div class="tab" data-tab="history">История</div>
-            <div class="tab" data-tab="edit">Редактировать</div>
-        </div>
-        
         <div class="client-info">
-            <!-- Вкладка информации -->
-            <div class="tab-content active" id="info-tab">
-                <div class="client-profile">
-                    <div class="client-big-avatar">ОК</div>
-                    <div class="client-details">
-                        <h2>Олена Ковальчук</h2>
-                        <div class="client-contact">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 5C3 3.89543 3.89543 3 5 3H8.27924C8.70967 3 9.09181 3.27543 9.22792 3.68377L10.7257 8.17721C10.8831 8.64932 10.6694 9.16531 10.2243 9.38787L7.96701 10.5165C9.06925 12.9612 11.0388 14.9308 13.4835 16.033L14.6121 13.7757C14.8347 13.3306 15.3507 13.1169 15.8228 13.2743L20.3162 14.7721C20.7246 14.9082 21 15.2903 21 15.7208V19C21 20.1046 20.1046 21 19 21H18C9.71573 21 3 14.2843 3 6V5Z" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            +380 98 765 4321
-                        </div>
-                        <div class="client-contact">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 8L10.8906 13.2604C11.5624 13.7083 12.4376 13.7083 13.1094 13.2604L21 8M5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19Z" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            olena.kovalchuk@gmail.com
-                        </div>
-                    </div>
+            <form id="addClientForm">
+                <div class="form-row">
+                    <label class="form-label">Ім'я та прізвище</label>
+                    <input type="text" class="form-input" name="fullName" required>
                 </div>
                 
-                <div class="info-section">
-                    <h3>Персональные данные</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Дата рождения</div>
-                            <div class="info-value">15.07.1990</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Пол</div>
-                            <div class="info-value">Женский</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Клиент с</div>
-                            <div class="info-value">01.01.2023</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Статус</div>
-                            <div class="info-value">
-                                <span class="status-indicator status-active"></span>
-                                Активный
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="info-section">
-                    <h3>Комментарии</h3>
-                    <div class="info-value">
-                        Предпочитает утренние занятия. Имеет небольшие проблемы с коленями, нужен индивидуальный подход.
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Вкладка абонемента -->
-            <div class="tab-content" id="membership-tab">
-                <div class="membership-card">
-                    <div class="membership-header">
-                        <div class="membership-title">Абонемент на 20 занятий</div>
-                        <div class="membership-status">Активный</div>
-                    </div>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Дата начала</div>
-                            <div class="info-value">01.03.2025</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Действителен до</div>
-                            <div class="info-value">30.04.2025</div>
-                        </div>
-                    </div>
-                    <div class="membership-progress">
-                        <div class="progress-label">
-                            <span>Использовано занятий</span>
-                            <span>16 из 20</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" style="width: 80%;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="info-section">
-                    <h3>История абонементов</h3>
-                    <div class="history-item">
-                        <div class="history-desc">Абонемент на 10 занятий</div>
-                        <div class="history-date">01.01.2025 - 28.02.2025</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Абонемент на 8 занятий</div>
-                        <div class="history-date">01.11.2024 - 31.12.2024</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Вкладка истории -->
-            <div class="tab-content" id="history-tab">
-                <div class="info-section">
-                    <h3>Последние занятия</h3>
-                    <div class="history-item">
-                        <div class="history-desc">Группа А - утренний пилатес</div>
-                        <div class="history-date">12.04.2025</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Группа А - утренний пилатес</div>
-                        <div class="history-date">10.04.2025</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Группа Б - пилатес на реформере</div>
-                        <div class="history-date">08.04.2025</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Группа А - утренний пилатес</div>
-                        <div class="history-date">05.04.2025</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Группа А - утренний пилатес</div>
-                        <div class="history-date">03.04.2025</div>
-                    </div>
-                </div>
-                
-                <div class="info-section">
-                    <h3>Платежи</h3>
-                    <div class="history-item">
-                        <div class="history-desc">Абонемент на 20 занятий</div>
-                        <div class="history-date">01.03.2025 - 9000₴</div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-desc">Абонемент на 10 занятий</div>
-                        <div class="history-date">01.01.2025 - 5000₴</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Вкладка редактирования -->
-            <div class="tab-content" id="edit-tab">
-                <form id="editClientForm">
+                <div class="form-group">
                     <div class="form-row">
-                        <label class="form-label">Имя и фамилия</label>
-                        <input type="text" class="form-input" value="Олена Ковальчук" name="fullName">
+                        <label class="form-label">Телефон</label>
+                        <input type="tel" class="form-input" name="phone">
                     </div>
-                    
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label class="form-label">Телефон</label>
-                            <input type="tel" class="form-input" value="+380 98 765 4321" name="phone">
-                        </div>
-                        <div class="form-row">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-input" value="olena.kovalchuk@gmail.com" name="email">
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" name="email">
                     </div>
-                    
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label class="form-label">Дата рождения</label>
-                            <input type="date" class="form-input" value="1990-07-15" name="birthdate">
-                        </div>
-                        <div class="form-row">
-                            <label class="form-label">Пол</label>
-                            <select class="form-select" name="gender">
-                                <option value="female" selected>Женский</option>
-                                <option value="male">Мужской</option>
-                                <option value="other">Другой</option>
-                            </select>
-                        </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-row">
+                        <label class="form-label">Дата народження</label>
+                        <input type="date" class="form-input" name="birthdate">
                     </div>
-                    
+                    <div class="form-row">
+                        <label class="form-label">Стать</label>
+                        <select class="form-select" name="gender">
+                            <option value="female">Жіноча</option>
+                            <option value="male">Чоловіча</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-row">
+                        <label class="form-label">Тренер</label>
+                        <select class="form-select" id="addCoach" name="coach">
+                            <option value="">Не призначено</option>
+                            <!-- Будет заполнено динамически -->
+                        </select>
+                    </div>
                     <div class="form-row">
                         <label class="form-label">Статус</label>
                         <select class="form-select" name="status">
-                            <option value="active" selected>Активный</option>
-                            <option value="inactive">Неактивный</option>
+                            <option value="active" selected>Активний</option>
+                            <option value="inactive">Неактивний</option>
                         </select>
                     </div>
-                    
-                    <div class="form-row">
-                        <label class="form-label">Комментарии</label>
-                        <textarea class="form-textarea" name="comments">Предпочитает утренние занятия. Имеет небольшие проблемы с коленями, нужен индивидуальный подход.</textarea>
-                    </div>
-                </form>
-            </div>
+                </div>
+                
+                <div class="form-row">
+                    <label class="form-label">Коментарі</label>
+                    <textarea class="form-textarea" name="comments"></textarea>
+                </div>
+            </form>
         </div>
         
         <div class="modal-footer">
-            <button class="modal-btn cancel-btn" id="cancelEdit">Отмена</button>
-            <button class="modal-btn save-btn" id="saveClient">Сохранить</button>
+            <button class="modal-btn cancel-btn" id="cancelAddClient">Скасувати</button>
+            <button class="modal-btn save-btn" id="saveNewClient">Зберегти</button>
         </div>
     </div>
 </div>
-    <script src="../js/menu.js"></script>
-<script src="../js/modal-window.js"></script>
+    
+    <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
+    <script src="{{ url_for('static',path = '/js/clients.js')}}"></script>
 </body>
 </html>
-
-
-
-
