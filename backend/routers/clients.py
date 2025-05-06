@@ -20,7 +20,7 @@ class ClientsManager(Manager):
             "last_lesson_date":client.lessons[-1].date.strftime( "%Y-%m-%d"),
             "lessons_total": len(client.lessons),
             "lessons_used": len([1 for lesson in client.lessons if lesson.is_used]),
-            "subscription_end_date":client.subscriptions[-1].valid_until.strftime( "%Y-%m-%d")
+            "subscription_end_date":client.subscriptions[-1].template.valid_until.strftime( "%Y-%m-%d")
             } for client in clients
         ]
 

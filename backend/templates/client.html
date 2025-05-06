@@ -137,9 +137,9 @@
 
             <!-- Вкладка "Абонементи" -->
             <div class="tab-panel" id="subscriptions-panel">
-                <div class="panel-actions">
+                <!-- <div class="panel-actions">
                     <button class="action-button" id="addSubscriptionBtn">Додати абонемент</button>
-                </div>
+                </div> -->
                 <div id="subscriptions-list" class="list-container">
                     <div class="empty-state">
                         <p>У клієнта немає активних абонементів</p>
@@ -312,6 +312,46 @@
         </div>
     </div>
 </div>
+<div id="schedulesContainer" class="schedules-container">
+    <!-- Здесь будут добавляться расписания -->
+</div>
+
+<!-- Контейнер для добавления нового расписания -->
+ <!-- Update your existing HTML with these modifications -->
+
+<!-- Modify the existing editScheduleBlock div -->
+<div class="schedule-input-container" id="editScheduleBlock">
+    <h3>Редагування розкладу</h3>
+    <div class="form-group">
+        <label>День тижня</label>
+        <select class="form-control" id="newScheduleDaySelect">
+            <option value="">Оберіть день тижня</option>
+            <option value="0">Понеділок</option>
+            <option value="1">Вівторок</option>
+            <option value="2">Середа</option>
+            <option value="3">Четвер</option>
+            <option value="4">П'ятниця</option>
+            <option value="5">Субота</option>
+            <option value="6">Неділя</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="newScheduleStartTime">Час початку</label>
+            <input type="time" class="form-control" id="newScheduleStartTime">
+        </div>
+        <div class="form-group">
+            <label for="newScheduleEndTime">Час закінчення</label>
+            <input type="time" class="form-control" id="newScheduleEndTime">
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="cancelScheduleBtn">Скасувати</button>
+        <button type="button" class="btn btn-primary" id="addScheduleToListBtn">Зберегти</button>
+    </div>
+</div>
+
+<!-- Add this to your subscription card HTML template where you want the edit button -->
 
     <script src="{{url_for('static',path = '/js/menu.js')}}"></script>
     <script src="{{url_for('static',path = '/js/api-codes.js')}}"></script>

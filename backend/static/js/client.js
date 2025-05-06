@@ -73,7 +73,7 @@ function saveAssignSubscription() {
         return;
     }
     
-    const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+    const clientId = new URLSearchParams(window.location.search).get('username') || 1;
     
     // Формирование данных для отправки
     const subscriptionData = {
@@ -102,7 +102,7 @@ function saveAssignSubscription() {
         // Обновляем данные абонементов
         ws.send(JSON.stringify({
             code: apiCodes.GET_CLIENT_SUBS,
-            id: clientId
+            username: clientId
         }));
     } else {
         alert('Немає з\'єднання з сервером');
@@ -550,7 +550,7 @@ function initializeAllEventHandlers() {
                 return;
             }
             
-            const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+            const clientId = new URLSearchParams(window.location.search).get('username') || 1;
             
             const subSelectInput = document.getElementById('subSelect');
             const dayOfWeekInput = document.getElementById('dayOfWeekSelect');
@@ -601,7 +601,7 @@ function initializeAllEventHandlers() {
     if (buttons.addLessonBtn) {
         buttons.addLessonBtn.addEventListener('click', function() {
             console.log('Add lesson button clicked');
-            const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+            const clientId = new URLSearchParams(window.location.search).get('username') || 1;
             
             // Перенаправление на страницу календаря для создания занятия
             window.location.href = `index.html?client_id=${clientId}`;
@@ -742,8 +742,6 @@ function renderSubscriptions() {
                 ${scheduleItems || '<p>Розклад не визначено</p>'}
             </div>
             <div class="subscription-actions">
-                <button class="action-button use-subscription-btn" data-id="${subscription.id}">Застосувати</button>
-                <button class="action-button add-schedule-btn" data-id="${subscription.id}">Додати розклад</button>
                 <button class="action-button edit-subscription-btn" data-id="${subscription.id}">Редагувати</button>
             </div>
         `;
@@ -1377,7 +1375,7 @@ function saveNewSchedule() {
         return;
     }
     
-    const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+    const clientUsername = new URLSearchParams(window.location.search).get('username') || 1;
     const subscriptionId = document.getElementById('scheduleSubId').value;
     const dayOfWeek = document.getElementById('scheduleDaySelect').value;
     const startTime = document.getElementById('scheduleStartTime').value;
@@ -1385,7 +1383,7 @@ function saveNewSchedule() {
     
     // Формирование данных для отправки
     const scheduleData = {
-        client_id: clientId,
+        client_username: clientUsername,
         subscription_id: subscriptionId,
         day_of_the_week: parseInt(dayOfWeek),
         start_time: startTime,
@@ -1412,7 +1410,7 @@ function saveNewSchedule() {
         // Обновляем данные абонементов
         ws.send(JSON.stringify({
             code: apiCodes.GET_CLIENT_SUBS,
-            id: clientId
+            username: clientUsername
         }));
     } else {
         alert('Немає з\'єднання з сервером');
@@ -1561,6 +1559,65 @@ function openEditSubscriptionModal(subscriptionId) {
                     deleteSchedule(this.getAttribute('data-id'));
                 });
             });
+
+            // Добавляем обработчики для редактирования расписаний
+            document.querySelectorAll('.schedule-item-edit').forEach(item => {
+                const days = [
+                    'Понеділок',
+                    'Вівторок',
+                    'Середа',
+                    'Четвер',
+                    'П\'ятниця',
+                    'Субота',
+                    'Неділя'
+                ];
+                
+                item.addEventListener('click', function(e) {
+                    // Не запускаем редактирование если клик был по кнопке удаления
+                    if (e.target.classList.contains('delete-schedule-btn')) {
+                        return;
+                    }
+                    
+                    // Extract day name and time
+                    const daySpan = this.querySelector('.schedule-day-edit');
+                    const timeSpan = this.querySelector('.schedule-time-edit');
+                    const deleteBtn = this.querySelector('.delete-schedule-btn');
+                    
+                    if (!daySpan || !timeSpan || !deleteBtn) {
+                        console.error('Required elements not found in schedule item', this);
+                        return;
+                    }
+                    
+                    const nameOfTheDay = daySpan.textContent;
+                    const day = days.findIndex(d => d === nameOfTheDay);
+                    
+                    if (day === -1) {
+                        console.error('Could not find day index for:', nameOfTheDay);
+                        return;
+                    }
+                    
+                    const timesText = timeSpan.textContent;
+                    const timesParts = timesText.split('-');
+                    
+                    if (timesParts.length !== 2) {
+                        console.error('Invalid time format:', timesText);
+                        return;
+                    }
+                    
+                    const start_time = timesParts[0].trim();
+                    const end_time = timesParts[1].trim();
+                    const scheduleId = deleteBtn.getAttribute('data-id');
+                    
+                    console.log('Editing schedule with values:', {
+                        day,
+                        start_time,
+                        end_time,
+                        scheduleId
+                    });
+                    
+                    editSchedule(scheduleId, start_time, end_time, day);
+                });
+            });
         } else {
             scheduleList.innerHTML = '<p>Розклад не визначено</p>';
         }
@@ -1569,7 +1626,6 @@ function openEditSubscriptionModal(subscriptionId) {
     // Открываем модальное окно
     editSubModal.classList.add('active');
 }
-
 // Закрытие модального окна редактирования абонемента
 function closeEditSubModal() {
     console.log('Closing edit subscription modal');
@@ -1594,7 +1650,7 @@ function saveEditedSubscription() {
         return;
     }
     
-    const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+    const clientId = new URLSearchParams(window.location.search).get('username') || 1;
     
     const subscriptionId = document.getElementById('editSubId').value;
     const usedLessons = parseInt(document.getElementById('editSubUsedLessons').value);
@@ -1630,19 +1686,391 @@ function saveEditedSubscription() {
         // Обновляем данные абонементов
         ws.send(JSON.stringify({
             code: apiCodes.GET_CLIENT_SUBS,
-            id: clientId
+            username: clientId
         }));
     } else {
         alert('Немає з\'єднання з сервером');
     }
 }
+// Improved editSchedule function that creates the buttons when needed
+function editSchedule(scheduleId, start_time, end_time, day_of_the_week) {
+    console.log('Editing schedule:', scheduleId);
+    
+    // Get the edit schedule block element
+    const editScheduleBlock = document.getElementById("editScheduleBlock");
+    
+    if (!editScheduleBlock) {
+        console.error("Edit schedule block not found!");
+        return;
+    }
+    
+    // Create overlay if it doesn't exist
+    let overlay = document.getElementById("schedule-edit-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "schedule-edit-overlay";
+        overlay.className = "schedule-overlay";
+        document.body.appendChild(overlay);
+        
+        // Add click event to close when clicking outside
+        overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) {
+                hideScheduleEditor();
+            }
+        });
+    }
+    
+    // First ensure the form is visible before trying to set values
+    overlay.style.display = 'block';
+    editScheduleBlock.style.display = 'block';
+    
+    // Add a header to the edit block if it doesn't have one
+    if (!editScheduleBlock.querySelector('h3')) {
+        const header = document.createElement('h3');
+        header.textContent = 'Редагування розкладу';
+        editScheduleBlock.insertBefore(header, editScheduleBlock.firstChild);
+    }
+    
+    // Create a hidden input for schedule ID if it doesn't exist
+    let scheduleIdInput = editScheduleBlock.querySelector('#scheduleIdInput');
+    if (!scheduleIdInput) {
+        scheduleIdInput = document.createElement('input');
+        scheduleIdInput.type = 'hidden';
+        scheduleIdInput.id = 'scheduleIdInput';
+        editScheduleBlock.appendChild(scheduleIdInput);
+    }
+    
+    // Create a close button if it doesn't exist
+    if (!editScheduleBlock.querySelector('.schedule-close-btn')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'schedule-close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Закрити');
+        closeBtn.addEventListener('click', hideScheduleEditor);
+        editScheduleBlock.appendChild(closeBtn);
+    }
+    
+    // Create or update buttons container
+    let buttonsContainer = editScheduleBlock.querySelector('.form-actions');
+    if (!buttonsContainer) {
+        buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'form-actions';
+        editScheduleBlock.appendChild(buttonsContainer);
+    }
+    
+    // Clear any existing buttons to avoid duplicates
+    buttonsContainer.innerHTML = '';
+    
+    // Create Cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.id = 'cancelScheduleEditBtn';
+    cancelBtn.textContent = 'Скасувати';
+    cancelBtn.addEventListener('click', function() {
+        console.log('Cancel schedule edit clicked');
+        hideScheduleEditor();
+    });
+    buttonsContainer.appendChild(cancelBtn);
+    
+    // Create Save button
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.id = 'saveScheduleEditBtn';
+    saveBtn.textContent = 'Зберегти';
+    saveBtn.addEventListener('click', function() {
+        console.log('Save schedule edit clicked');
+        saveEditedSchedule();
+    });
+    buttonsContainer.appendChild(saveBtn);
+    
+    // Setup the form with current schedule data
+    const daySelect = document.getElementById("newScheduleDaySelect");
+    const startTimeInput = document.getElementById("newScheduleStartTime");
+    const endTimeInput = document.getElementById("newScheduleEndTime");
+    
+    // Make sure we have valid form elements
+    if (!daySelect || !startTimeInput || !endTimeInput) {
+        console.error("Cannot find required form elements!");
+        alert("Помилка: неможливо знайти поля форми. Будь ласка, спробуйте ще раз.");
+        return;
+    }
+    
+    // Set the values
+    if (scheduleIdInput) scheduleIdInput.value = scheduleId;
+    daySelect.value = day_of_the_week.toString();
+    startTimeInput.value = start_time.toString().trim();
+    endTimeInput.value = end_time.toString().trim();
+    
+    // Stop event propagation to prevent closing when clicking on the form
+    editScheduleBlock.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
 
+// Improved hideScheduleEditor function
+function hideScheduleEditor() {
+    console.log('Hiding schedule editor');
+    const overlay = document.getElementById('schedule-edit-overlay');
+    const editScheduleBlock = document.getElementById('editScheduleBlock');
+    
+    if (overlay) overlay.style.display = 'none';
+    if (editScheduleBlock) editScheduleBlock.style.display = 'none';
+}
+
+// Improved saveEditedSchedule function
+function saveEditedSchedule() {
+    const scheduleIdInput = document.getElementById('scheduleIdInput');
+    const daySelect = document.getElementById("newScheduleDaySelect");
+    const startTimeInput = document.getElementById("newScheduleStartTime");
+    const endTimeInput = document.getElementById("newScheduleEndTime");
+    
+    if (!scheduleIdInput || !daySelect || !startTimeInput || !endTimeInput) {
+        console.error("Required form elements not found!");
+        alert("Помилка: неможливо знайти поля форми. Будь ласка, спробуйте ще раз.");
+        return;
+    }
+    
+    const scheduleId = scheduleIdInput.value;
+    const dayOfWeek = daySelect.value;
+    const startTime = startTimeInput.value;
+    const endTime = endTimeInput.value;
+    
+    if (!dayOfWeek || !startTime || !endTime) {
+        alert('Будь ласка, заповніть усі поля розкладу');
+        return;
+    }
+    
+    if (startTime >= endTime) {
+        alert('Час початку повинен бути раніше часу закінчення');
+        return;
+    }
+    
+    console.log('Saving edited schedule:', {
+        id: scheduleId,
+        day_of_the_week: parseInt(dayOfWeek),
+        start_time: startTime,
+        end_time: endTime
+    });
+    
+    // Send data to server
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        const apiCodes = window.API_CODES || {
+            UPDATE_SCHEDULE: 300,
+            GET_CLIENT_SUBS: 198
+        };
+        
+        ws.send(JSON.stringify({
+            code: apiCodes.UPDATE_SCHEDULE,
+            schedule: {
+                id: scheduleId,
+                day_of_the_week: parseInt(dayOfWeek),
+                start_time: startTime,
+                end_time: endTime
+            }
+        }));
+        
+        // Update UI immediately for better UX
+        const clientUsername = new URLSearchParams(window.location.search).get('username') || 1;
+        
+        // Hide the editor
+        hideScheduleEditor();
+        
+        // Refresh subscriptions data
+        setTimeout(() => {
+            ws.send(JSON.stringify({
+                code: apiCodes.GET_CLIENT_SUBS,
+                username: clientUsername
+            }));
+        }, 300);
+    } else {
+        alert('Немає з\'єднання з сервером');
+    }
+}// Function to hide the schedule editor// Add this function to properly set up the schedule editing modal buttons
+function setupScheduleEditButtons() {
+    console.log('Setting up schedule edit buttons');
+    
+    // Get the cancel button by ID
+    const cancelButton = document.getElementById('cancelScheduleBtn');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', function() {
+            console.log('Cancel schedule edit button clicked');
+            hideScheduleEditor();
+        });
+    } else {
+        console.error('Cancel schedule button not found!');
+    }
+    
+    // Get the save button - note it might be using a different ID than expected
+    // The button in the HTML is "addScheduleToListBtn" but in the edit context it should save
+    const saveButton = document.querySelector('#editScheduleBlock #addScheduleToListBtn');
+    if (saveButton) {
+        // Fix the button text to make it clearer
+        saveButton.textContent = 'Зберегти';
+        
+        saveButton.addEventListener('click', function() {
+            console.log('Save schedule edit button clicked');
+            saveEditedSchedule();
+        });
+    } else {
+        console.error('Save schedule button not found!');
+    }
+    
+    // Create dedicated buttons if they don't exist
+    if (!document.getElementById('saveScheduleEditBtn')) {
+        const buttonsContainer = document.querySelector('#editScheduleBlock .form-actions');
+        
+        if (buttonsContainer) {
+            // Remove existing buttons
+            buttonsContainer.innerHTML = '';
+            
+            // Create Cancel button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-secondary';
+            cancelBtn.id = 'cancelScheduleEditBtn';
+            cancelBtn.textContent = 'Скасувати';
+            cancelBtn.addEventListener('click', function() {
+                console.log('Cancel schedule edit clicked');
+                hideScheduleEditor();
+            });
+            buttonsContainer.appendChild(cancelBtn);
+            
+            // Create Save button
+            const saveBtn = document.createElement('button');
+            saveBtn.type = 'button';
+            saveBtn.className = 'btn btn-primary';
+            saveBtn.id = 'saveScheduleEditBtn';
+            saveBtn.textContent = 'Зберегти';
+            saveBtn.addEventListener('click', function() {
+                console.log('Save schedule edit clicked');
+                saveEditedSchedule();
+            });
+            buttonsContainer.appendChild(saveBtn);
+            
+            console.log('Created new schedule edit buttons');
+        }
+    }
+}
+
+// Modified hideScheduleEditor function to properly hide the editor
+function hideScheduleEditor() {
+    console.log('Hiding schedule editor');
+    const overlay = document.getElementById('schedule-edit-overlay');
+    const editScheduleBlock = document.getElementById('editScheduleBlock');
+    
+    if (overlay) overlay.style.display = 'none';
+    if (editScheduleBlock) editScheduleBlock.style.display = 'none';
+}
+
+// Modified editSchedule function to call the setup for buttons
+function editSchedule(scheduleId, start_time, end_time, day_of_the_week) {
+    console.log('Editing schedule:', scheduleId);
+    
+    // Get the edit schedule block element
+    const editScheduleBlock = document.getElementById("editScheduleBlock");
+    
+    // Create overlay if it doesn't exist
+    let overlay = document.getElementById("schedule-edit-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "schedule-edit-overlay";
+        overlay.className = "schedule-overlay";
+        document.body.appendChild(overlay);
+        
+        // Add click event to close when clicking outside
+        overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) {
+                hideScheduleEditor();
+            }
+        });
+    }
+    
+    // First ensure the form is visible before trying to set values
+    overlay.style.display = 'block';
+    editScheduleBlock.style.display = 'block';
+    
+    // Wait a brief moment to ensure DOM is fully rendered
+    setTimeout(() => {
+        // Setup the form with current schedule data
+        const daySelect = document.getElementById("newScheduleDaySelect");
+        const startTimeInput = document.getElementById("newScheduleStartTime");
+        const endTimeInput = document.getElementById("newScheduleEndTime");
+        
+        console.log("Form elements:", {
+            daySelect: daySelect ? "found" : "not found",
+            startTimeInput: startTimeInput ? "found" : "not found",
+            endTimeInput: endTimeInput ? "found" : "not found"
+        });
+        
+        // Add a header to the edit block if it doesn't have one
+        if (!editScheduleBlock.querySelector('h3')) {
+            const header = document.createElement('h3');
+            header.textContent = 'Редагування розкладу';
+            editScheduleBlock.insertBefore(header, editScheduleBlock.firstChild);
+        }
+        
+        // Create a hidden input for schedule ID if it doesn't exist
+        let scheduleIdInput = editScheduleBlock.querySelector('#scheduleIdInput');
+        if (!scheduleIdInput) {
+            scheduleIdInput = document.createElement('input');
+            scheduleIdInput.type = 'hidden';
+            scheduleIdInput.id = 'scheduleIdInput';
+            editScheduleBlock.appendChild(scheduleIdInput);
+        }
+        
+        // Create a close button if it doesn't exist
+        if (!editScheduleBlock.querySelector('.schedule-close-btn')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'schedule-close-btn';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.setAttribute('aria-label', 'Закрити');
+            closeBtn.addEventListener('click', hideScheduleEditor);
+            editScheduleBlock.appendChild(closeBtn);
+        }
+        
+        // Setup the buttons
+        setupScheduleEditButtons();
+        
+        // Make sure we have valid form elements
+        if (!daySelect || !startTimeInput || !endTimeInput) {
+            console.error("Cannot find required form elements!");
+            alert("Помилка: неможливо знайти поля форми. Будь ласка, спробуйте ще раз.");
+            return;
+        }
+        
+        // Ensure we're using the direct property setter, not attribute
+        daySelect.value = day_of_the_week.toString();
+        startTimeInput.value = start_time.toString().trim();
+        endTimeInput.value = end_time.toString().trim();
+        if (scheduleIdInput) scheduleIdInput.value = scheduleId;
+        
+        // Force a UI update by triggering a change event
+        const changeEvent = new Event('change', { bubbles: true });
+        daySelect.dispatchEvent(changeEvent);
+        startTimeInput.dispatchEvent(changeEvent);
+        endTimeInput.dispatchEvent(changeEvent);
+        
+        console.log('Form values after setting:', {
+            day: daySelect.value,
+            startTime: startTimeInput.value,
+            endTime: endTimeInput.value,
+            id: scheduleIdInput ? scheduleIdInput.value : 'N/A'
+        });
+    }, 100); // Small delay to ensure DOM is ready
+    
+    // Stop event propagation to prevent closing when clicking on the form
+    editScheduleBlock.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
 // Удаление расписания
 function deleteSchedule(scheduleId) {
     console.log('Deleting schedule:', scheduleId);
     
     if (confirm('Ви впевнені, що хочете видалити цей розклад?')) {
-        const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+        const clientId = new URLSearchParams(window.location.search).get('username') || 1;
         
         // Отправка данных на сервер
         if (window.ws && window.ws.readyState === WebSocket.OPEN) {
@@ -1665,7 +2093,7 @@ function deleteSchedule(scheduleId) {
             // Обновляем данные абонементов
             ws.send(JSON.stringify({
                 code: apiCodes.GET_CLIENT_SUBS,
-                id: clientId
+            username: clientId
             }));
         } else {
             alert('Немає з\'єднання з сервером');
@@ -1678,7 +2106,7 @@ function cancelLesson(lessonId) {
     console.log('Canceling lesson:', lessonId);
     
     if (confirm('Ви впевнені, що хочете скасувати це заняття?')) {
-        const clientId = new URLSearchParams(window.location.search).get('id') || 1;
+        const clientId = new URLSearchParams(window.location.search).get('username') || 1;
         
         // Отправка данных на сервер
         if (window.ws && window.ws.readyState === WebSocket.OPEN) {
@@ -1695,7 +2123,7 @@ function cancelLesson(lessonId) {
             // Обновляем данные уроков
             ws.send(JSON.stringify({
                 code: apiCodes.GET_CLIENT_LESSONS,
-                id: clientId
+                username: clientId
             }));
         } else {
             alert('Немає з\'єднання з сервером');
