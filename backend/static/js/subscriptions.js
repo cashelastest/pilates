@@ -35,6 +35,9 @@ const subscriptionDetailsModal = document.getElementById('subscriptionDetailsMod
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.ws && window.ws.readyState !== WebSocket.CLOSED) {
+    window.ws.close();
+  }
     // Инициализация обработчиков событий
     initializeEventHandlers();
     
@@ -89,10 +92,9 @@ function initializeEventHandlers() {
     document.getElementById('saveTemplateBtn').addEventListener('click', saveTemplate);
     
     // Изменение группы в форме шаблона
-    document.getElementById('templateGroup').addEventListener('change', toggleScheduleSection);
+    // document.getElementById('templateGroup').addEventListener('change', toggleScheduleSection);
     
-    // Обработчики для модального окна расписания
-    document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
+
     document.getElementById('closeScheduleModal').addEventListener('click', closeScheduleModal);
     document.getElementById('cancelScheduleBtn').addEventListener('click', closeScheduleModal);
     document.getElementById('saveScheduleBtn').addEventListener('click', addScheduleItem);
@@ -100,7 +102,7 @@ function initializeEventHandlers() {
     // Обработчики для модального окна деталей шаблона
     document.getElementById('closeTemplateDetailsModal').addEventListener('click', closeTemplateDetailsModal);
     document.getElementById('closeDetailsBtn').addEventListener('click', closeTemplateDetailsModal);
-    document.getElementById('editTemplateBtn').addEventListener('click', openEditTemplateModal);
+    // document.getElementById('editTemplateBtn').addEventListener('click', openEditTemplateModal);
     document.getElementById('deleteTemplateBtn').addEventListener('click', confirmDeleteTemplate);
     
     // Обработчики для модального окна деталей абонемента
@@ -315,8 +317,8 @@ function renderTemplates(templatesData) {
         card.dataset.id = template.id;
         
         // Находим имя тренера и группы
-        const coachName = coaches.find(c => c.id === template.coach_id)?.name || 'Не призначено';
-        const groupName = template.group_id ? (groups.find(g => g.id === template.group_id)?.name || 'Група не знайдена') : 'Індивідуальний';
+        const coachName = template.coach_name || 'Не призначено';
+        const groupName = template.group_name || "Індивідуальний";
         
         card.innerHTML = `
             <div class="template-header">
@@ -516,17 +518,17 @@ function populateClientFilter() {
     });
 }
 
-// Переключение отображения секции расписания
-function toggleScheduleSection() {
-    const groupId = document.getElementById('templateGroup').value;
-    const scheduleSection = document.getElementById('scheduleSection');
+// // Переключение отображения секции расписания
+// function toggleScheduleSection() {
+//     const groupId = document.getElementById('templateGroup').value;
+//     const scheduleSection = document.getElementById('scheduleSection');
     
-    if (groupId) {
-        scheduleSection.style.display = 'block';
-    } else {
-        scheduleSection.style.display = 'none';
-    }
-}
+//     if (groupId) {
+//         scheduleSection.style.display = 'block';
+//     } else {
+//         scheduleSection.style.display = 'none';
+//     }
+// }
 
 // Открытие модального окна создания шаблона
 function openCreateTemplateModal() {
@@ -568,8 +570,8 @@ function openEditTemplateModal(template) {
     schedules = template.schedules || [];
     renderSchedulesList();
     
-    // Отображаем секцию расписания если выбрана группа
-    toggleScheduleSection();
+    // // Отображаем секцию расписания если выбрана группа
+    // toggleScheduleSection();
     
     closeTemplateDetailsModal();
     templateModal.classList.add('active');
@@ -698,9 +700,7 @@ function renderSchedulesList() {
                 <div class="schedule-day">${dayName}</div>
                 <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
             </div>
-            <div class="schedule-actions">
-                <button type="button" class="remove-schedule" data-id="${schedule.id}">&times;</button>
-            </div>
+
         `;
         
         schedulesList.appendChild(scheduleItem);
@@ -728,7 +728,8 @@ function openTemplateDetailsModal(template) {
     document.getElementById('detailTemplateName').dataset.id = template.id;
     
     // Находим имя тренера и группы
-    const coachName = coaches.find(c => c.id === template.coach_id)?.name || 'Не призначено';
+    const coachName = template.coach_name || 'Н1';
+    console.log(template);
     const groupName = template.group_id ? (groups.find(g => g.id === template.group_id)?.name || 'Група не знайдена') : 'Індивідуальний';
     
     document.getElementById('detailTemplateCoach').textContent = coachName;

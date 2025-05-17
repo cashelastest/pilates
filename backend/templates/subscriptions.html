@@ -1,59 +1,23 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Абонементи - Pilates Studio</title>
+{% extends "base.html" %}
 
+    <title> {%block title%} Абонементи {% endblock %} </title>
+{%set active_page = 'subs' %}
+
+{% block styles %}
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/subscriptions.css')}}">
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/schedule.css')}}">
-        <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/groups.css')}}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header-block">
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li><a href="index.html">Дошка</a></li>
-                <li><a href="coaches.html">Тренери</a></li>
-                <li><a href="clients.html">Клієнти</a></li>
-                <li><a href="groups.html">Групи</a></li>
-                <li class="active-page"><a href="subscriptions.html">Абонементи</a></li>
-                <li><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="right-header">
-            <span id="user-profile">Профіль</span>
-        </div>
-        <div class="menu-btn" aria-label="Відкрити меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
-            <a href="groups.html" class="dropdown-item">Групи</a>
-            <a href="subscriptions.html" class="dropdown-item">Абонементи</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-        </div>
-    </header>
+{% endblock %}
+
+{% block content %}
 
     <main class="subscriptions-container">
-        <!-- Tabs for switching between templates and active subscriptions -->
+
         <div class="subscription-tabs">
             <button class="tab-button active" data-tab="templates">Шаблони абонементів</button>
             <button class="tab-button" data-tab="active">Активні абонементи</button>
         </div>
 
-        <!-- Templates Tab -->
         <div class="subscription-tab-content active" id="templates-panel">
             <div class="subscriptions-header">
                 <h1>Шаблони абонементів</h1>
@@ -78,11 +42,10 @@
             </div>
 
             <div class="subscriptions-grid" id="templatesGrid">
-                <!-- Template cards will be added here dynamically -->
+
             </div>
         </div>
 
-        <!-- Active Subscriptions Tab -->
         <div class="subscription-tab-content" id="active-panel">
             <div class="subscriptions-header">
                 <h1>Активні абонементи</h1>
@@ -108,12 +71,11 @@
             </div>
 
             <div class="subscriptions-grid" id="subscriptionsGrid">
-                <!-- Subscription cards will be added here dynamically -->
+
             </div>
         </div>
     </main>
 
-    <!-- Modal window for creating/editing subscription template -->
     <div id="templateModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -156,13 +118,13 @@
                         <textarea class="form-control" id="templateDescription" rows="3"></textarea>
                     </div>
                     
-                    <!-- Schedule section (only shown when group is selected) -->
+
                     <div id="scheduleSection" style="display: none;">
                         <h4>Розклад занять</h4>
                         <div id="schedulesList">
-                            <!-- Schedule items will be added here -->
+
                         </div>
-                        <button type="button" id="addScheduleBtn" class="action-button">Додати розклад</button>
+
                     </div>
                 </form>
             </div>
@@ -172,7 +134,8 @@
             </div>
         </div>
     </div>
-
+{% endblock %}
+{% block modals %}
     <!-- Modal window for adding schedule item -->
     <div id="scheduleModal" class="modal-overlay">
         <div class="modal-container">
@@ -213,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Modal window for viewing template details -->
+
     <div id="templateDetailsModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -255,19 +218,18 @@
                 <div class="template-schedules">
                     <h4>Розклад занять</h4>
                     <div id="detailSchedulesList" class="list-container">
-                        <!-- Schedule items will be added here dynamically -->
+
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="closeDetailsBtn">Закрити</button>
-                <button type="button" class="btn btn-primary" id="editTemplateBtn">Редагувати</button>
+
                 <button type="button" class="btn btn-danger" id="deleteTemplateBtn">Видалити</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal window for viewing subscription details -->
     <div id="subscriptionDetailsModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -305,14 +267,14 @@
                 <div class="subscription-lessons">
                     <h4>Заняття</h4>
                     <div id="detailLessonsList" class="list-container">
-                        <!-- Lessons will be added here dynamically -->
+
                     </div>
                 </div>
 
                 <div class="subscription-schedules">
                     <h4>Розклад</h4>
                     <div id="detailSubscriptionSchedules" class="list-container">
-                        <!-- Schedule items will be added here dynamically -->
+
                     </div>
                 </div>
             </div>
@@ -322,9 +284,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <!-- Скрипты -->
-    <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
+{% block scripts %}
     <script src="{{ url_for('static',path = '/js/subscriptions.js')}}"></script>
-</body>
-</html>
+
+{% endblock %}

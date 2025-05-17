@@ -1,6 +1,7 @@
 // Основная функция инициализации для всех обработчиков событий
 window.tempSchedules = [];
 
+// Обеспечиваем гарантированный вызов инициализации при открытии модального окна
 function openAssignSubscriptionModal() {
     console.log('Opening assign subscription modal');
     const assignSubscriptionModal = document.getElementById('assignSubscriptionModal');
@@ -30,7 +31,32 @@ function openAssignSubscriptionModal() {
     
     // Открываем модальное окно
     assignSubscriptionModal.classList.add('active');
+    
+    // Сбрасываем выбор абонемента
+    const subSelect = document.getElementById('subSelect');
+    if (subSelect) {
+        subSelect.value = '';
+        
+        // Гарантируем, что расписание изначально видно (до выбора абонемента)
+        const scheduleInputContainer = document.querySelector('.schedule-input-container');
+        const schedulesContainer = document.getElementById('schedulesContainer');
+        const scheduleHeading = document.querySelector('form#assignSubForm .form-group:nth-child(3)');
+        
+        if (scheduleInputContainer) scheduleInputContainer.style.display = 'block';
+        if (schedulesContainer) schedulesContainer.style.display = 'block';
+        if (scheduleHeading) scheduleHeading.style.display = 'block';
+    }
+    
+    // Удаляем предыдущее информационное сообщение, если оно есть
+    const groupSubscriptionInfo = document.getElementById('groupSubscriptionInfo');
+    if (groupSubscriptionInfo) {
+        groupSubscriptionInfo.remove();
+    }
+    
+    // Сразу же инициализируем обработчик выбора типа абонемента
+    setTimeout(initializeSubscriptionTypeHandler, 100); // Небольшая задержка для гарантии
 }
+
 function closeAssignSubModal() {
     console.log('Closing assign sub modal');
     const assignSubscriptionModal = document.getElementById('assignSubscriptionModal');
@@ -51,6 +77,7 @@ function closeAssignSubModal() {
     window.tempSchedules = [];
 }
 
+
 function saveAssignSubscription() {
     console.log('Save assign sub button clicked');
     const assignSubForm = document.getElementById('assignSubForm');
@@ -67,8 +94,22 @@ function saveAssignSubscription() {
         return;
     }
     
-    // Проверяем, добавлено ли хотя бы одно расписание
-    if (window.tempSchedules.length === 0) {
+    // Получаем данные о выбранном абонементе
+    const selectedSubscription = window.subscriptionsData.find(sub => sub.id == subSelectInput.value);
+    
+    if (!selectedSubscription) {
+        console.error('Выбранный абонемент не найден в данных');
+        alert('Помилка: обраний абонемент не знайдено');
+        return;
+    }
+    
+    // Определяем, является ли абонемент групповым
+    const isGroupSubscription = selectedSubscription.is_group || selectedSubscription.group_id;
+    console.log('Selected subscription:', selectedSubscription);
+    console.log('Is group subscription:', isGroupSubscription);
+    
+    // Проверяем наличие расписания только для НЕ групповых абонементов
+    if (!isGroupSubscription && window.tempSchedules.length === 0) {
         alert('Будь ласка, додайте хоча б один розклад');
         return;
     }
@@ -79,7 +120,7 @@ function saveAssignSubscription() {
     const subscriptionData = {
         client_id: clientId,
         template: subSelectInput.value,
-        schedules: window.tempSchedules
+        schedules: isGroupSubscription ? [] : window.tempSchedules
     };
     
     console.log('Subscription data to send:', subscriptionData);
@@ -106,6 +147,113 @@ function saveAssignSubscription() {
         }));
     } else {
         alert('Немає з\'єднання з сервером');
+    }
+}
+function toggleScheduleContainerBasedOnSubscriptionType(subscriptionId) {
+    if (!subscriptionId) return;
+    
+    console.log('Toggling schedule container for subscription:', subscriptionId);
+    
+    // Получаем выбранный абонемент из данных
+    const selectedSubscription = window.subscriptionsData.find(sub => sub.id == subscriptionId);
+    
+    if (!selectedSubscription) {
+        console.error('Выбранный абонемент не найден в данных');
+        return;
+    }
+    
+    // Получаем все элементы, связанные с расписанием
+    const scheduleInputContainer = document.querySelector('.schedule-input-container');
+    const schedulesContainer = document.getElementById('schedulesContainer');
+    
+    // Получаем заголовок "Розклад для абонементу"
+    const scheduleHeading = document.querySelector('form#assignSubForm .form-group:nth-child(3)');
+    
+    // Информационное сообщение о групповом абонементе
+    let groupSubscriptionInfo = document.getElementById('groupSubscriptionInfo');
+    
+    // Проверяем, является ли абонемент групповым
+    const isGroupSubscription = selectedSubscription.is_group || selectedSubscription.group_id;
+    console.log('Is group subscription:', selectedSubscription);
+    
+    if (isGroupSubscription) {
+        // Скрываем всё, что связано с расписанием
+        if (scheduleInputContainer) {
+            scheduleInputContainer.style.display = 'none';
+            console.log('Hiding schedule input container');
+        }
+        
+        if (schedulesContainer) {
+            schedulesContainer.style.display = 'none';
+            console.log('Hiding schedules container');
+        }
+        
+        if (scheduleHeading) {
+            scheduleHeading.style.display = 'none';
+            console.log('Hiding schedule heading');
+        }
+        
+        // Добавляем информационное сообщение, если его ещё нет
+        if (!groupSubscriptionInfo) {
+            groupSubscriptionInfo = document.createElement('div');
+            groupSubscriptionInfo.id = 'groupSubscriptionInfo';
+            groupSubscriptionInfo.className = 'group-subscription-info';
+            groupSubscriptionInfo.innerHTML = '<p>Розклад для групового абонементу встановлюється автоматично відповідно до розкладу групи.</p>';
+            
+            // Находим подходящее место для вставки сообщения
+            const afterElement = document.querySelector('.modal-form-separator');
+            if (afterElement && afterElement.parentNode) {
+                afterElement.parentNode.insertBefore(groupSubscriptionInfo, afterElement.nextSibling);
+                console.log('Added group subscription info message');
+            } else {
+                console.error('Could not find element to insert group subscription info after');
+            }
+        }
+    } else {
+        // Показываем элементы расписания для обычных абонементов
+        if (scheduleInputContainer) {
+            scheduleInputContainer.style.display = 'block';
+            console.log('Showing schedule input container');
+        }
+        
+        if (schedulesContainer) {
+            schedulesContainer.style.display = 'block';
+            console.log('Showing schedules container');
+        }
+        
+        if (scheduleHeading) {
+            scheduleHeading.style.display = 'block';
+            console.log('Showing schedule heading');
+        }
+        
+        // Удаляем информационное сообщение, если оно есть
+        if (groupSubscriptionInfo) {
+            groupSubscriptionInfo.remove();
+            console.log('Removed group subscription info message');
+        }
+    }
+}
+
+// Обновляем функцию инициализации обработчика выбора абонемента
+function initializeSubscriptionTypeHandler() {
+    console.log('Initializing subscription type handler');
+    
+    const subSelect = document.getElementById('subSelect');
+    if (subSelect) {
+        // Удаляем существующий обработчик, чтобы избежать дублирования
+        subSelect.removeEventListener('change', function() {
+            toggleScheduleContainerBasedOnSubscriptionType(this.value);
+        });
+        
+        // Добавляем новый обработчик
+        subSelect.addEventListener('change', function() {
+            console.log('Subscription select changed to:', this.value);
+            toggleScheduleContainerBasedOnSubscriptionType(this.value);
+        });
+        
+        console.log('Subscription select change event handler attached');
+    } else {
+        console.error('Subscription select element not found');
     }
 }
 

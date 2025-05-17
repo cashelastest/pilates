@@ -1,50 +1,14 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Групи - Pilates Studio</title>
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/groups.css')}}">
+{%extends 'base.html'%}
+    {%block title%}Групи - Pilates Studio{%endblock%}
+
+    {% set active_page = 'groups' %}
+{%block styles%}
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/subscriptions.css')}}">
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/schedule.css')}}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header-block">
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li><a href="index.html">Дошка</a></li>
-                <li><a href="coaches.html">Тренери</a></li>
-                <li><a href="clients.html">Клієнти</a></li>
-                <li class="active-page"><a href="groups.html">Групи</a></li>
-                <li><a href="subscriptions.html">Абонементи</a></li>
-                <li><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="right-header">
-            <span id="user-profile">Профіль</span>
-        </div>
-        <div class="menu-btn" aria-label="Відкрити меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
-            <a href="groups.html" class="dropdown-item">Групи</a>
-            <a href="subscriptions.html" class="dropdown-item">Абонементи</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-        </div>
-    </header>
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/groups.css')}}">
+{%endblock%}
 
+{%block content%}
     <main class="groups-container">
         <div class="groups-header">
             <h1>Групи</h1>
@@ -73,7 +37,8 @@
             <!-- Карточки групп будут добавляться сюда динамически -->
         </div>
     </main>
-
+{%endblock%}
+{%block modals%}
     <!-- Модальное окно создания/редактирования группы -->
     <div id="groupModal" class="modal-overlay">
         <div class="modal-container">
@@ -170,9 +135,9 @@
                 </div>
 
                 <div class="tab-panel" id="lessons-panel">
-                    <div class="panel-actions">
+                    <!-- <div class="panel-actions">
                         <button class="action-button" id="addLessonBtn">Додати заняття</button>
-                    </div>
+                    </div> -->
                     <div class="lessons-filter">
                         <label>
                             <input type="radio" name="lessons-filter" value="all" checked>
@@ -193,9 +158,9 @@
                 </div>
                 
                 <div class="tab-panel" id="schedules-panel">
-                    <div class="panel-actions">
+                    <!-- <div class="panel-actions">
                         <button class="action-button" id="addScheduleBtn">Додати розклад</button>
-                    </div>
+                    </div> -->
                     <div id="detailSchedulesList" class="list-container">
                         <!-- Список расписаний будет добавлен динамически -->
                     </div>
@@ -311,10 +276,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Скрипты -->
-    <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
-    <!-- <script src="{{ url_for('static',path = '/js/data/group-mock-data.js')}}"></script> -->
+{%endblock%}
+{%block scripts%}
     <script src="{{ url_for('static',path = '/js/group.js')}}"></script>
-</body>
-</html>
+{%endblock%}

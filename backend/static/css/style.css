@@ -79,7 +79,7 @@ a {
 }
 
 .active-page {
-    height: 2.5em;
+    height: 2em;
     background-color: var(--peach);
     color: var(--dark-gray);
     border-radius: 12px;

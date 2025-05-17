@@ -1,8 +1,9 @@
-from fastapi import APIRouter,Request
+from fastapi import APIRouter,Request, Depends
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 from fastapi.websockets import WebSocket
-from connection import Connection
-from models import Client, Lesson, Subscription, SubscriptionSchedule
+from connection import Connection,get_db
+from models import Client, Lesson, Subscription, SubscriptionSchedule, SubscriptionTemplate
 from datetime import datetime
 from utils import generate_dates
 
@@ -32,7 +33,7 @@ class Transaction:
 
 
 class ClientManager(Manager):
-    async def get_client_data(self, ws: WebSocket, username:str):
+    async def get_client_data(self, ws: WebSocket, username:str, session:Session = Depends(get_db)):
         client = self.session.query(Client).filter(Client.username == username).first()
         client_data = {
             'code':294,
@@ -53,19 +54,35 @@ class ClientManager(Manager):
         await ws.send_json(client_data)
 
 
-    async def get_subs(self, ws:WebSocket, username:str):
+    async def get_subs(self, ws:WebSocket, username:str, session:Session = Depends(get_db)):
         client = self.session.query(Client).filter(Client.username ==username).first()
         subs = client.subscriptions
-        all_subs = self.session.query(Subscription).all()
+        all_subs = self.session.query(SubscriptionTemplate).all()
         # print(list(all_subs))
         subs_data = [{
-            "id":subscription.id,
-            "name":subscription.template.name} 
-              for subscription in all_subs]
+            "id":template.id,
+            "name":template.name,
+            "is_group": True if template.group else False} 
+              for template in all_subs]
         data = []
 
         for subscription in subs:
-        
+            if subscription.template.group:
+                schedules = [
+                    {
+                    'id':schedule.id,
+                    'day_of_the_week':schedule.day_of_the_week,
+                    "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                    "end_time": schedule.end_time.strftime("%H:%M:%S"),
+                    } for schedule in subscription.template.group.schedules]
+            else:
+                schedules = [
+                    {
+                    'id':schedule.id,
+                    'day_of_the_week':schedule.day_of_the_week,
+                    "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                    "end_time": schedule.end_time.strftime("%H:%M:%S"),
+                    } for schedule in subscription.schedules]
             used_lessons = len([0 for lesson in subscription.lessons if lesson.is_used])
             data.append(
                 {
@@ -74,15 +91,9 @@ class ClientManager(Manager):
                 "price":subscription.template.price,
                 'total_lessons': subscription.template.total_lessons,
                 'used_lessons': used_lessons,
-                'valid_until': datetime.strftime(subscription.template.valid_until, "%Y-%m-%d"),
+                'valid_until': datetime.strftime(subscription.valid_until, "%Y-%m-%d"),
                 'is_active': subscription.template.total_lessons>used_lessons,
-                "schedules": [
-                    {
-                    'id':schedule.id,
-                    'day_of_the_week':schedule.day_of_the_week,
-                    "start_time": schedule.start_time.strftime("%H:%M:%S"),
-                    "end_time": schedule.end_time.strftime("%H:%M:%S"),
-                    } for schedule in subscription.schedules],
+                "schedules": schedules,
             })
         response = {
             'code':296,
@@ -110,26 +121,32 @@ class ClientManager(Manager):
 
         self.session.add(subscription)
         self.session.flush()
+        if data.get("schedules"):
+            schedules = [SubscriptionSchedule(
+                subscription_id = subscription.id,
+                    start_time = schedule_data.get("start_time"),
+                    end_time = schedule_data.get("end_time"),
+                    day_of_the_week = schedule_data.get("day_of_the_week")
+                ) for schedule_data in data.get('schedules') ]
+            self.session.add_all(schedules)
+        else:
+            print("else")
+            schedules = subscription.template.group.schedules
 
-
-        schedules = [SubscriptionSchedule(
-            subscription_id = subscription.id,
-                start_time = schedule_data.get("start_time"),
-                end_time = schedule_data.get("end_time"),
-                day_of_the_week = schedule_data.get("day_of_the_week")
-            ) for schedule_data in data.get('schedules') ]
-        self.session.add_all(schedules)
-        schedule_data = list(tuple(schedule.values()) for schedule in data.get("schedules"))
+        schedule_data = list(tuple([schedule.day_of_the_week, schedule.start_time, schedule.end_time]) for schedule in schedules)
         lessons =[]
         dates = generate_dates(
             info=schedule_data,
             count=subscription.template.total_lessons)
+        if len(dates) < subscription.template.total_lessons:
+            self.session.rollback()
+            raise Exception(f"Not enough lessons {dates}")
         for lesson_index in range(subscription.template.total_lessons):
             lesson = Lesson(
                 price = subscription.template.price//subscription.template.total_lessons,
                 date = dates[lesson_index][0],
-                start_time = datetime.strptime(dates[lesson_index][1],"%H:%M"),
-                end_time = datetime.strptime(dates[lesson_index][2],"%H:%M"),
+                start_time = dates[lesson_index][1].strftime("%H:%M"),
+                end_time = dates[lesson_index][2].strftime("%H:%M"),
                 is_used= False,
                 subscription_id = subscription.id,
                 client_id = client.id,
@@ -141,8 +158,8 @@ class ClientManager(Manager):
         print(f"generated {len(lessons)} lessons")
         return True
 
-    async def fetch_client_lessons(self, ws:WebSocket, username : str):
-        client = self.session.query(Client).filter(Client.username == username).first()
+    async def fetch_client_lessons(self, ws:WebSocket, username : str, session:Session = Depends(get_db)):
+        client = session.query(Client).filter(Client.username == username).first()
         lessons = client.lessons
         response_data = [{
             "id":lesson.id,
@@ -159,38 +176,39 @@ class ClientManager(Manager):
             "data":response_data
         }
         await ws.send_json(response)
-    async def update_client_data(self, data):
+
+    async def update_client_data(self, data, session:Session = Depends(get_db)):
         print(data.get('client_username'))
-        client = self.session.query(Client).filter(Client.username == data.get('client_username')).first()
+        client = session.query(Client).filter(Client.username == data.get('client_username')).first()
         del data['client_username']
         for attr, attr_value in data.items():
             setattr(client, attr, attr_value)
-        self.session.commit()
+        session.commit()
         print(f"Successfully updated user {client.id}")
-    async def assign_sub(self,subs_id, client_username,data):
-        client = self.session.query(Client).filter(Client.username == client_username).first()
-        subscription = self.session.get(Subscription, subs_id)
-        schedule = SubscriptionSchedule(
-            client_id = client.id,
-            subscription = subs_id,
-            day_of_the_week = data.get('day_of_the_week'),
-            start_time = data.get("start_time"),
-            end_time = data.get("end_time")
-        )
-        self.session.add(schedule)
-        self.session.commit()
+    # async def assign_sub(self,subs_id, client_username,data, session:Session = Depends(get_db)):
+    #     client = session.query(Client).filter(Client.username == client_username).first()
+    #     subscription = session.get(Subscription, subs_id)
+    #     schedule = SubscriptionSchedule(
+    #         client_id = client.id,
+    #         subscription = subs_id,
+    #         day_of_the_week = data.get('day_of_the_week'),
+    #         start_time = data.get("start_time"),
+    #         end_time = data.get("end_time")
+    #     )
+    #     session.add(schedule)
+    #     session.commit()
         
-    async def use_sub(self, sub_id,client_name):
+    async def use_sub(self, sub_id,client_name, session = Depends(get_db)):
         print('name')
-        subscription = self.session.get(Subscription, sub_id)
+        subscription = session.get(Subscription, sub_id)
         schedules = subscription.schedules
         schedule_info = [(schedule.day_of_the_week,
                            schedule.start_time,
                              schedule.end_time)
                                for schedule in schedules]
         print(schedule_info)
-        client =self.session.query(Client).filter(Client.username == client_name).first()
-        with Transaction(self.session) as transaction:
+        client =session.query(Client).filter(Client.username == client_name).first()
+        with Transaction(session) as transaction:
             client.balance-=subscription.price
             subscription.is_active = True
 
@@ -209,14 +227,11 @@ class ClientManager(Manager):
                     coach_id = client.coach.id
                 )
                 lessons.append(lesson)
-            self.session.add_all(lessons)
-    def roll (self):
-        self.session.rollback()
-            # for _ in subscription.total_lessons:
-            #     lesson = Lesson(
+            session.add_all(lessons)
+    # def roll (self, session:Session = Depends(get_db)):
+    #     session.rollback()
 
-            #     )
-        print("Success!")
+    #     print("Success!")
 clinet_manager = ClientManager()
 
 

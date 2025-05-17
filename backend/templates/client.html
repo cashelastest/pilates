@@ -1,42 +1,11 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профіль клієнта - Pilates Studio CRM</title>
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+{% extends "base.html" %}
+    {%block title %} Профіль клієнта {%endblock%}
+{%block styles%}
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/dashboard_modal_window_styles.css')}}">
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/client.css')}}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header-block">
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li><a href="/dashboard/">Дошка</a></li>
-                <li><a href="coaches.html">Тренери</a></li>
-                <li class="active-page"><a href="/clients/">Клієнти</a></li>
-                <li><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="menu-btn" aria-label="Відкрити меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <div class="dropdown-menu">
-            <a href="/dashboard/" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="/clients/" class="dropdown-item">Клієнти</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-        </div>
-    </header>
+{% endblock %}
 
+{% block content %}
     <main class="client-container">
         <div class="back-button">
             <a href="/clients/">&larr; Повернутися до списку клієнтів</a>
@@ -66,9 +35,12 @@
                 </div>
             </div>
             <div class="client-actions">
+                <!-- <button class="action-button" id="editClientBtn">Поповнити баланс</button> -->
+                <!-- <button class="action-button" id="editClientBtn">Призначити груповий абонемент</button> -->
+
                 <button class="action-button" id="editClientBtn">Редагувати профіль</button>
                 <button class="action-button" id="assignSubscriptionBtn">Призначити абонемент</button>
-                <!-- <button class="action-button" id="addBalance">Поповнити баланс</button> -->
+
 
             </div>
         </div>
@@ -80,7 +52,7 @@
         </div>
 
         <div class="client-tab-content">
-            <!-- Вкладка "Деталі" -->
+
             <div class="tab-panel active" id="details-panel">
                 <div class="client-details">
                     <div class="detail-section">
@@ -137,11 +109,7 @@
                 </div>
             </div>
 
-            <!-- Вкладка "Абонементи" -->
             <div class="tab-panel" id="subscriptions-panel">
-                <!-- <div class="panel-actions">
-                    <button class="action-button" id="addSubscriptionBtn">Додати абонемент</button>
-                </div> -->
                 <div id="subscriptions-list" class="list-container">
                     <div class="empty-state">
                         <p>У клієнта немає активних абонементів</p>
@@ -149,7 +117,7 @@
                 </div>
             </div>
 
-            <!-- Вкладка "Заняття" -->
+
             <div class="tab-panel" id="lessons-panel">
                 <div class="panel-actions">
                     <button class="action-button" id="addLessonBtn">Додати заняття</button>
@@ -176,8 +144,10 @@
             </div>
         </div>
     </main>
+{% endblock %}
 
-    <!-- Модальное окно редактирования профиля -->
+
+{% block modals %}
     <div id="editClientModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -230,14 +200,13 @@
                         <label for="editClientCoach">Тренер</label>
                         <select class="form-control" id="editClientCoach">
                             <option value="">Виберіть тренера</option>
-                            <!-- Will be populated from API -->
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="editClientGroup">Група</label>
                         <select class="form-control" id="editClientGroup">
                             <option value="">Виберіть групу</option>
-                            <!-- Will be populated from API -->
+
                         </select>
                     </div>
                     <div class="form-group">
@@ -266,20 +235,18 @@
                     <label for="subSelect">Абонемент</label>
                     <select class="form-control" id="subSelect" required>
                         <option value="">Оберіть абонемент</option>
-                        <!-- Will be populated from API -->
                     </select>
                 </div>
                 <div class="modal-form-separator"></div>
                 <div class="form-group">
                     <label>Розклад для абонементу</label>
                 </div>
-                
-                <!-- Контейнер для добавленных расписаний -->
+
                 <div id="schedulesContainer" class="schedules-container">
-                    <!-- Здесь будут добавляться расписания -->
+
                 </div>
                 
-                <!-- Контейнер для добавления нового расписания -->
+
                 <div class="schedule-input-container">
                     <div class="form-group">
                         <label>День тижня</label>
@@ -315,13 +282,9 @@
     </div>
 </div>
 <div id="schedulesContainer" class="schedules-container">
-    <!-- Здесь будут добавляться расписания -->
 </div>
 
-<!-- Контейнер для добавления нового расписания -->
- <!-- Update your existing HTML with these modifications -->
 
-<!-- Modify the existing editScheduleBlock div -->
 <div class="schedule-input-container" id="editScheduleBlock">
     <h3>Редагування розкладу</h3>
     <div class="form-group">
@@ -353,10 +316,10 @@
     </div>
 </div>
 
-<!-- Add this to your subscription card HTML template where you want the edit button -->
+{% endblock %}
 
-    <script src="{{url_for('static',path = '/js/menu.js')}}"></script>
+
+{% block scripts %}
     <script src="{{url_for('static',path = '/js/api-codes.js')}}"></script>
     <script src="{{url_for('static',path = '/js/client.js')}}"></script>
-</body>
-</html>
+{% endblock %}

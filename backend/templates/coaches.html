@@ -1,58 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренера</title>
+{% extends "base.html" %}
+    <title>{%block title%} Тренера {%endblock%}</title>
+    {%block styles%}
 <link rel="stylesheet" href="{{ url_for('static',path = '/css/coaches.css')}}">
 <link rel="stylesheet" href="{{ url_for('static',path = '/css/coach-modal.css')}}">
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
-
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-</head>
-<body>
+{% endblock %}
+{% set active_page = "coaches" %}
+{% block content %}
     
-    <header class="header-block">
-                
 
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li ><a href="index.html">Дошка</a></li>
-                <li class="active-page"><a href="coaches.html">Тренери</a></li>
-                <li ><a href="clients.html">Клієнти</a></li>
-                <li ><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="menu-btn" aria-label="Открыть меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <!-- <div class="right-header"><span> Вхід</span> <span> Реєстрація</span></div> -->
-        <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-            <a href="logout.html" class="dropdown-item">Вихід</a>
-        </div>
-    </header>
     <main>
 
     <div class="container">
         <h1>Тренери</h1>
             <!-- Add this button right after the h1 heading in coaches.html -->
-<div class="add-trainer-container">
-    <button id="addTrainerBtn" class="add-trainer-button">
-        <span class="plus-icon">+</span> Додати тренера
-    </button>
-</div>
+    <div class="add-trainer-container">
+        <button id="addTrainerBtn" class="add-trainer-button">
+            <span class="plus-icon">+</span> Додати тренера
+        </button>
+    </div>
         <div class="trainers-grid">
             <!-- Карточка тренера 1 -->
              {%for card in cards%}
@@ -72,20 +37,7 @@
                         <span class="availability-indicator available"></span>
                         {{card.status}}
                     </div>
-                    <!-- <div class="trainer-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">{{card.clients_amount}}</div>
-                            <div class="stat-label">Клієнтів</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">{{card.groups_amount}}</div>
-                            <div class="stat-label">Груп</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">{{card.rate}}</div>
-                            <div class="stat-label">Рейтинг</div>
-                        </div>
-                    </div> -->
+
                     <div class="trainer-actions">
                         <button class="action-button">Розклад</button>
                         <button class="action-button">Редагувати</button>
@@ -98,7 +50,10 @@
         </div>
     </div>
 
-    </main><!-- Модальное окно с информацией о тренере -->
+    </main>
+
+{% endblock %}
+{% block modals %}
     <div id="trainerModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -106,7 +61,7 @@
             <div class="modal-header">
                 <h2 id="modalTrainerName"></h2>
                 <p id="modalTrainerPosition"></p>
-                <!-- <div class="trainer-status" id="modalTrainerStatus"></div> -->
+   
             </div>
             
             <div class="tabs-container">
@@ -118,7 +73,7 @@
                     <button class="tab-button" data-tab="edit">Редагувати</button>
                 </div>
                 
-                <!-- Вкладка с информацией -->
+
                 <div class="tab-content active" id="detailsTab">
                     <div class="trainer-detail-content">
                         <div class="modal-trainer-photo">
@@ -128,32 +83,15 @@
                             <h3>Інформація про тренера</h3>
                             <p id="modalTrainerBio"></p>
                             
-                            <!-- <div class="trainer-detail-item">
-                                <span class="detail-label">Спеціалізація</span>
-                                <span id="trainerSpecialization"></span>
-                            </div>
-                            
-                            <div class="trainer-detail-item">
-                                <span class="detail-label">Досвід</span>
-                                <span id="trainerExperience"></span>
-                            </div>
-                            
-                            <div class="trainer-detail-item">
-                                <span class="detail-label">Сертифікати</span>
-                                <div id="trainerCertificates"></div>
-                            </div> -->
                         </div>
                     </div>
                 </div>
-                <!-- Вкладка с расписанием -->
                 <div class="tab-content" id="scheduleTab">
                     <h3>Розклад тренера</h3>
                     <div id="trainerSchedule" class="schedule-container">
                         <p>Завантаження розкладу...</p>
                     </div>
                 </div>
-                
-                <!-- Вкладка со статистикой -->
                 <div class="tab-content" id="statisticsTab">
                     <h3>Статистика тренера</h3>
                     <div class="statistics-container">
@@ -166,10 +104,7 @@
                                 <div class="stat-value" id="statSessionsMonth">0</div>
                                 <div class="stat-label">Занять за місяць</div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statRating">0.0</div>
-                                <div class="stat-label">Середня оцінка</div>
-                            </div>
+
                             <div class="stat-card">
                                 <div class="stat-value" id="statActiveGroups">0</div>
                                 <div class="stat-label">Активних груп</div>
@@ -180,15 +115,9 @@
                             <h4>Кількість занять за останні 6 місяців</h4>
                             <canvas id="sessionsChart"></canvas>
                         </div>
-                        
-                        <!-- <div class="chart-container">
-                            <h4>Розподіл типів занять</h4>
-                            <canvas id="sessionsTypeChart"></canvas>
-                        </div> -->
                     </div>
                 </div>
                 
-                <!-- Вкладка с комментариями -->
                 <div class="tab-content" id="commentsTab">
                     <h3>Відгуки про тренера</h3>
                     <div class="rating-summary">
@@ -206,7 +135,7 @@
                     </div>
                 </div>
                 
-                <!-- Вкладка с редактированием -->
+
                 <div class="tab-content" id="editTab">
                     <h3>Редагування інформації про тренера</h3>
                     <form id="editTrainerForm" class="edit-form">
@@ -224,17 +153,7 @@
                             <label for="editDescription">Опис:</label>
                             <textarea id="editDescription" name="description" rows="4" required></textarea>
                         </div>
-                        
-                        <!-- <div class="form-group">
-                            <label for="editSpecialization">Спеціалізація:</label>
-                            <input type="text" id="editSpecialization" name="specialization">
-                        </div>
-                         -->
-                        <!-- <div class="form-group">
-                            <label for="editExperience">Досвід:</label>
-                            <input type="text" id="editExperience" name="experience">
-                        </div> -->
-                        
+
                         <div class="form-group">
                             <label for="editStatus">Статус:</label>
                             <select id="editStatus" name="status">
@@ -260,10 +179,6 @@
             </div>
         </div>
     </div>
-
-
-
-<!-- Add this modal at the end of the body tag, next to the existing modal -->
 <div id="addTrainerModal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
@@ -288,16 +203,7 @@
                 <textarea id="newDescription" name="description" rows="4" required></textarea>
             </div>
             
-            <!-- <div class="form-group">
-                <label for="newSpecialization">Спеціалізація:</label>
-                <input type="text" id="newSpecialization" name="specialization">
-            </div>
-            
-            <div class="form-group">
-                <label for="newExperience">Досвід:</label>
-                <input type="text" id="newExperience" name="experience">
-            </div> -->
-            
+
             <div class="form-group">
                 <label for="newStatus">Статус:</label>
                 <select id="newStatus" name="status">
@@ -321,9 +227,8 @@
         </form>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
     <script src="{{ url_for('static',path = '/js/coach-modal.js')}}"></script>
-
-</body>
-</html>
+{% endblock %}

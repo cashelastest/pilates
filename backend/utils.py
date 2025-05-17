@@ -168,7 +168,7 @@ def custom_translit(text):
 def sort_by_monthes(lessons:list[Lesson]):
     months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
     sorted_lessons = []
-    print(lessons[0].date.month)
+
     for month_number, month in enumerate(months):
         session_history = {
             "month":month,

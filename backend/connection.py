@@ -1,16 +1,66 @@
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import Session
 from models import Base
+from contextlib import contextmanager
+import functools
+from fastapi import HTTPException
+import asyncio
+
+def get_db():
+    db = Connection.get_session()
+    try:
+        yield db
+    finally:
+        db.close()
 class Connection:
-
     url = "mysql+pymysql://root:Sobaka1@localhost:3306/pilates"
-
-    engine = create_engine(url)
+    engine = create_engine(
+        url,
+        pool_size=20,
+        max_overflow=30,  
+        pool_timeout=60,      
+        pool_recycle=3600,    
+        pool_pre_ping=True     
+    )
+    
+    @staticmethod
     def get_session() -> Session:
-
-        session = Session(bind = Connection.engine)
+        session = Session(bind=Connection.engine)
         return session
+    
+    @staticmethod
     def create_all_models():
         Base.metadata.create_all(Connection.engine)
 
+    @staticmethod
+    @contextmanager
+    def session_scope():
+
+        session = Connection.get_session()
+        try:
+            yield session
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Error in database: {e}")
+            raise
+        finally:
+            session.close()
+def db_session(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        with Connection.session_scope() as session:
+            kwargs['session'] = session
+            return await func(*args, **kwargs)
+            
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        with Connection.session_scope() as session:
+            kwargs['session'] = session
+            return func(*args, **kwargs)
+    
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    return sync_wrapper
 Connection.create_all_models()

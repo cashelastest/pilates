@@ -77,16 +77,16 @@ class DashboardManager:
         print(f"recieved data: {message}")
         return message
     
-    async def create_subscription(self, subscription_data:dict):
-        subscription = Subscription(
-            name=subscription_data['name'],
-            price=subscription_data['price'],
-            description=subscription_data['description'],
-        )
-        self.session.add(subscription)
-        self.session.commit()
-        print(f"Subscription {subscription.id} created successfully!")
-        return subscription
+    # async def create_subscription(self, subscription_data:dict):
+    #     subscription = Subscription(
+    #         name=subscription_data['name'],
+    #         price=subscription_data['price'],
+    #         description=subscription_data['description'],
+    #     )
+    #     self.session.add(subscription)
+    #     self.session.commit()
+    #     print(f"Subscription {subscription.id} created successfully!")
+    #     return subscription
 
     async def create_lesson(self, lesson_data:dict):
         lesson = Lesson(
@@ -108,17 +108,17 @@ class DashboardManager:
         self.session.get(Lesson,lesson_id).is_cancelled = True
         self.session.commit()
 
-    async def apply_schedule_for_subscription(self, data:dict):
-        subscription = SubscriptionSchedule(
-            subscription_id = data['subscription_id'],
-            date =  data.get("date"),
-            start_time = data['start_time'],
-            end_time = data['end_time'],
-            day_of_the_week = data.get('day_of_the_week')
-        )
-        self.session.add(subscription)
-        self.session.commit()
-        return subscription
+    # async def apply_schedule_for_subscription(self, data:dict):
+    #     subscription = SubscriptionSchedule(
+    #         subscription_id = data['subscription_id'],
+    #         date =  data.get("date"),
+    #         start_time = data['start_time'],
+    #         end_time = data['end_time'],
+    #         day_of_the_week = data.get('day_of_the_week')
+    #     )
+    #     self.session.add(subscription)
+    #     self.session.commit()
+    #     return subscription
     
     async def fetch_clients_subs_coaches(self, ws: WebSocket):
         data = get_items_list(self.session, Client, Subscription)

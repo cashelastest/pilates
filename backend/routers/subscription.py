@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from connection import Connection
+from sqlalchemy.orm import Session
+from connection import Connection, db_session,get_db
 from models import SubscriptionTemplate, Subscription, Client, Coach, Group, SubscriptionSchedule, Lesson
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -38,19 +39,24 @@ def get_subscriptions_page(request: Request):
 
 
 @api_subscription_router.put("/templates/{template_id}")
-def change_template(template_id:int, changed_template: TemplateUpdate, session = Depends(Connection.get_session)):
+def change_template(template_id:int, changed_template: TemplateUpdate,session = Depends(get_db)):
+    # raise HTTPException(status_code=404, detail = 'No such template')
     template = session.get(SubscriptionTemplate, template_id)
     if not template:
         raise HTTPException(status_code=404, detail = 'No such template')
-    for attr in vars(changed_template):
-        setattr(template, attr, getattr(changed_template))
+    for attr, value in vars(changed_template).items():
+        if value:
+            setattr(template, attr, value)
+
     session.commit()
     session.refresh(template)
-
+    return {"code":200, "data":"Success"}
 
 
 @api_subscription_router.get("/coaches")
-def get_coaches(session = Depends(Connection.get_session)):
+
+def get_coaches(session:Session = Depends(get_db)):
+
     coaches = session.query(Coach).all()
     data = [
         {
@@ -60,7 +66,8 @@ def get_coaches(session = Depends(Connection.get_session)):
     ]
     return data
 @api_subscription_router.get("/groups")
-def get_coaches(session = Depends(Connection.get_session)):
+
+def get_groups(session = Depends(get_db)):
     groups = session.query(Group).all()
     data = [
         {
@@ -70,7 +77,7 @@ def get_coaches(session = Depends(Connection.get_session)):
     ]
     return data
 @api_subscription_router.get("/clients")
-def get_coaches(session = Depends(Connection.get_session)):
+def get_clients(session = Depends(get_db)):
     clients = session.query(Client).all()
     data = [
         {
@@ -81,15 +88,17 @@ def get_coaches(session = Depends(Connection.get_session)):
     return data
 
 @api_subscription_router.get('/templates')
-def get_templates(session = Depends(Connection.get_session)):
+def get_templates(session = Depends(get_db)):
     templates =session.query(SubscriptionTemplate).all()
     data = [{"id":template.id,
              "name":template.name,
              "price":template.price,
              "total_lessons": template.total_lessons,
              "valid_days":template.valid_days,
-             "coach_id":template.coach_id,
-             "group_id":template.group_id,
+             "coach_id":template.coach.id,
+             "coach_name":template.coach.name,
+             "group_id":template.group.id,
+             "group_name":template.group.name,
              "description":template.description,
              "schedules":[
                  {
@@ -103,9 +112,23 @@ def get_templates(session = Depends(Connection.get_session)):
              } for template in templates]
     return data
 
+@api_subscription_router.post("/templates")
+def create_template(template:TemplateCreate, session:Session = Depends(get_db)):
+    new_template = SubscriptionTemplate(
+        name = template.name,
+        price=  template.price,
+        description = template.description,
+        total_lessons = template.total_lessons,
+        valid_days = template.valid_days,
+        coach_id = template.coach_id,
+        group_id = template.group_id,
+    )
+    session.add(new_template)
+    session.commit()
+    return {"code":200, "data":"Success"}
 
 @api_subscription_router.get('/subscriptions')
-def get_subscriptions(session = Depends(Connection.get_session)):
+def get_subscriptions(session = Depends(get_db)):
     subscriptions = session.query(Subscription).all()
     data = [
         {
@@ -140,7 +163,7 @@ def get_subscriptions(session = Depends(Connection.get_session)):
     return data
 
 @api_subscription_router.get("/templates/{template_id}")
-def get_template(template_id:int,session = Depends(Connection.get_session)):
+def get_template(template_id:int,session = Depends(get_db)):
     template = session.get(SubscriptionTemplate, template_id)
     if not template:
         raise HTTPException("No such template")
@@ -150,6 +173,8 @@ def get_template(template_id:int,session = Depends(Connection.get_session)):
         "price":template.price,
         "total_lessons":template.total_lessons,
         "valid_days":template.valid_days,
+        "coach_id":template.coach,
+        "coach_name":template.coach.name,
         'group_id':template.group_id,
         "description":template.description,
         "schedules":[
@@ -165,3 +190,20 @@ def get_template(template_id:int,session = Depends(Connection.get_session)):
     return data
 
 
+@api_subscription_router.delete("/templates/{template_id}")
+def delete_template(template_id: int, session:Session = Depends(get_db)):
+    template = session.get(SubscriptionTemplate, template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail= "Not Found")
+    session.delete(template)
+    session.commit()
+
+    return {"code":200, "data":"Success"}
+
+@api_subscription_router.post("/subscriptions/{template_id}/cancel")
+def delete_subscription(template_id:int, session:Session = Depends(get_db)):
+    template = session.get(SubscriptionTemplate, template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail= "Not Found")
+    session.delete(template)
+    session.commit()

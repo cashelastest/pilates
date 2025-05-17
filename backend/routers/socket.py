@@ -115,6 +115,7 @@ async def dashboard_socket(ws:WebSocket):
                 'data': 'success'
             })
     except WebSocketDisconnect:
-        await manager.disconnect(ws)
-        SocketManager.connecions.remove(ws)
+        manager.disconnect(ws)
+        if ws in SocketManager.connecions:
+            SocketManager.connecions.remove(ws)
         print("Ended websocket connection")

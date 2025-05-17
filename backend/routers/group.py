@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 templates = Jinja2Templates(directory='templates')
-group_router = APIRouter(prefix='/group', tags=['group'])
+group_router = APIRouter(prefix='/groups', tags=['group'])
 
 class GroupManager(Manager):
 
@@ -199,10 +199,6 @@ class GroupManager(Manager):
         self.session.commit()
 
 
-
-
-
-
     async def get_group_schedules(self, group_id:int, ws:WebSocket):
         group = self.session.get(Group, group_id)
         if not group:
@@ -224,6 +220,6 @@ class GroupManager(Manager):
 @group_router.get("/")
 def get_groups(request:Request):
     return templates.TemplateResponse(
-        request=request, name = 'group.html'
+        'group.html', {'request':request} 
     )
     

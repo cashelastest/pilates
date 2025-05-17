@@ -46,10 +46,10 @@ class Coach(Base):
     schedules = relationship("CoachSchedule", back_populates='coach')
     status = Column(String(100),default = 'Активний')
     clients = relationship("Client", back_populates='coach')
-    comments = relationship('Comment', back_populates='coach')
+    comments = relationship('Comment', back_populates='coach', cascade="all, delete-orphan")
     groups = relationship('Group', back_populates="coach")
-    lessons = relationship('Lesson', back_populates='coach')
-    subscriptions_templates = relationship("SubscriptionTemplate", back_populates="coach")
+    lessons = relationship('Lesson', back_populates='coach',cascade="all, delete-orphan")
+    subscriptions_templates = relationship("SubscriptionTemplate", back_populates="coach",cascade="all, delete-orphan")
 
 
 class Lesson(Base):
@@ -80,7 +80,7 @@ class SubscriptionTemplate(Base):
     group_id = Column(Integer, ForeignKey("groups.id"))
     group = relationship('Group', back_populates="subscriptions_templates")
     coach =relationship("Coach", back_populates="subscriptions_templates")
-    subscriptions = relationship('Subscription', back_populates="template")
+    subscriptions = relationship('Subscription', back_populates="template", cascade="all, delete-orphan")
 
 
 class Subscription(Base):
@@ -91,8 +91,8 @@ class Subscription(Base):
     valid_until = Column(Date, default=datetime.now() + timedelta(days = 30)) #~ here we say in days 
     template = relationship('SubscriptionTemplate', back_populates="subscriptions")
     client = relationship('Client', back_populates='subscriptions')
-    lessons = relationship('Lesson', back_populates='subscription')
-    schedules = relationship('SubscriptionSchedule', back_populates='subscription')
+    lessons = relationship('Lesson', back_populates='subscription', cascade="all, delete-orphan")
+    schedules = relationship('SubscriptionSchedule', back_populates='subscription',cascade="all, delete-orphan")
 
 
 class Client(Base):
@@ -109,11 +109,11 @@ class Client(Base):
     description = Column(String(300))
     joined = Column(Date)
     coach_id = Column(Integer, ForeignKey("coaches.id"))
-    subscriptions = relationship('Subscription', back_populates='client')
+    subscriptions = relationship('Subscription', back_populates='client',cascade="all, delete-orphan")
     coach = relationship("Coach", back_populates='clients')
-    comments = relationship('Comment', back_populates='client')
-    lessons = relationship('Lesson', back_populates='client')
-    group_associations = relationship('ClientGroupAssociation', back_populates="client")
+    comments = relationship('Comment', back_populates='client',cascade="all, delete-orphan")
+    lessons = relationship('Lesson', back_populates='client', cascade="all, delete-orphan")
+    group_associations = relationship('ClientGroupAssociation', back_populates="client", cascade="all, delete-orphan")
     groups = relationship("Group", secondary="client_group_association", viewonly=True)
 
    
@@ -149,6 +149,7 @@ def chack_balance(mapper, connection, lesson):
     client = session.get(Client, lesson.client_id)
     # print(f"CLIENT ID {lesson.client_id}")
     if client and client.balance <lesson.price:
+        session.rollback()
         raise Exception("Not enough money!")
     client.balance -= lesson.price
     session.commit()

@@ -1,43 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Клієнти - Pilates Studio CRM</title>
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
-    <link rel="stylesheet" href="{{ url_for('static',path = '/css/clients.css')}}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-</head>
-<body>
-    
-    <header class="header-block">
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li><a href="index.html">Дошка</a></li>
-                <li><a href="coaches.html">Тренери</a></li>
-                <li class="active-page"><a href="clients.html">Клієнти</a></li>
-                <li><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="menu-btn" aria-label="Відкрити меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-            <a href="logout.html" class="dropdown-item">Вихід</a>
-        </div>
-    </header>
+{% extends "base.html" %}
+    {% set active_page="clients" %}
+    <title>{%block title%} Клієнти {%endblock%}</title>
 
+    {%block styles%}
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/clients.css')}}">
+    {% endblock %}
+
+
+{% block content%}
     <main>
         <div class="clients-container">
             <div class="clients-header">
@@ -101,8 +71,8 @@
             </div>
         </div>
     </main>
-    
-    <!-- Модальное окно для просмотра/редактирования клиента -->
+    {% endblock %}
+   {% block modals %}
     <div class="modal-overlay" id="clientModal">
         <div class="client-modal">
             <div class="modal-header">
@@ -122,7 +92,7 @@
             </div>
             
             <div class="client-info">
-                <!-- Вкладка информации -->
+
                 <div class="tab-content active" id="info-tab">
                     <div class="client-profile">
                         <div class="client-big-avatar" id="clientAvatar">ІК</div>
@@ -175,8 +145,7 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Вкладка абонемента -->
+
                 <div class="tab-content" id="membership-tab">
                     <div class="membership-card" id="activeSubscription">
                         <div class="membership-header">
@@ -207,29 +176,29 @@
                     <div class="info-section">
                         <h3>Історія абонементів</h3>
                         <div id="subscriptionsHistory">
-                            <!-- Здесь будет динамически добавляться история абонементов -->
+
                         </div>
                     </div>
                 </div>
                 
-                <!-- Вкладка истории -->
+
                 <div class="tab-content" id="history-tab">
                     <div class="info-section">
                         <h3>Останні заняття</h3>
                         <div id="lessonsHistory">
-                            <!-- Здесь будет динамически добавляться история занятий -->
+
                         </div>
                     </div>
                     
                     <div class="info-section">
                         <h3>Платежі</h3>
                         <div id="paymentsHistory">
-                            <!-- Здесь будет динамически добавляться история платежей -->
+    
                         </div>
                     </div>
                 </div>
                 
-                <!-- Вкладка редактирования -->
+
                 <div class="tab-content" id="edit-tab">
                     <form id="editClientForm">
                         <input type="hidden" id="clientId" name="clientId">
@@ -270,7 +239,7 @@
                                 <label class="form-label">Тренер</label>
                                 <select class="form-select" id="editCoach" name="coach">
                                     <option value="">Не призначено</option>
-                                    <!-- Будет заполнено динамически -->
+
                                 </select>
                             </div>
                             <div class="form-row">
@@ -296,10 +265,10 @@
             </div>
         </div>
     </div>
-    <!-- Replace the existing add client modal section with this code -->
-<!-- Модальное окно для добавления нового клиента -->
+
+
 <div class="modal-overlay" id="addClientModal">
-    <div class="client-modal add-client-modal"> <!-- Changed class to use existing styling -->
+    <div class="client-modal add-client-modal"> 
         <div class="modal-header">
             <h2 class="modal-title">Додати нового клієнта</h2>
             <button class="modal-close" id="closeAddModal">
@@ -371,8 +340,8 @@
         </div>
     </div>
 </div>
-    
-<script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
+{% endblock %}
+{% block scripts %}    
 <script src="{{ url_for('static',path = '/js/clients.js')}}"></script>
-</body>
-</html>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{%block title%} {%endblock%}</title>
+    {%block styles%} {%endblock%}
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+
+    <header class="header-block">
+        <span class="left-part">Pilates Studio</span>
+        <nav>
+            <ul>
+                <li {% if active_page == 'index' %} class="active-page"{% endif %}><a href="/dashboard/">Дошка</a></li>
+                <li {% if active_page == 'coaches' %} class="active-page"{% endif %}><a href="/coaches/">Тренери</a></li>
+                <li {% if active_page == 'clients' %} class="active-page"{% endif %}><a href="/clients/">Клієнти</a></li>
+                <li {% if active_page == 'groups' %} class="active-page"{% endif %}><a href="/groups/">Групи</a></li>
+                <li {% if active_page == 'subs' %} class="active-page"{% endif %}><a href="/subscriptions/">Абонементи</a></li>
+                <li {% if active_page == 'stats' %} class="active-page"{% endif %}><a href="/stats/">Статистика</a></li>
+            </ul>
+        </nav>
+        <div class="menu-btn" aria-label="Відкрити меню">
+            <div class="hamburger">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </div>
+        </div>
+        <div class="dropdown-menu">
+            <a href="index.html" class="dropdown-item">Дошка</a>
+            <a href="coaches.html" class="dropdown-item">Тренери</a>
+            <a href="clients.html" class="dropdown-item">Клієнти</a>
+            <a href="groups.html" class="dropdown-item">Групи</a>
+            <a href="stats.html" class="dropdown-item">Статистика</a>
+        </div>
+    </header>
+
+        {% block content %}{% endblock %}
+
+    {%block modals%}
+    {%endblock%}
+  <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
+{%block scripts%} {%endblock%}
+</body>
+</html>

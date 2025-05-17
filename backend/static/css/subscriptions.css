@@ -125,9 +125,14 @@
     margin-right: 0;
     margin-bottom: 10px;
 }
+.search-input{
+    margin: 10px 0
+}
+
 
 .filter-options {
     flex-wrap: wrap;
+    margin-bottom: 10px;
 }
 
 .modal-overlay.active {

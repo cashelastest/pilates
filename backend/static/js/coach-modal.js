@@ -54,9 +54,8 @@ tabButtons.forEach(button => {
         // Загрузка данных для вкладки, если нужно
         if (button.dataset.tab === 'statistics' && currentTrainerId) {
             loadTrainerStatistics(currentTrainerId);
-        } else if (button.dataset.tab === 'comments' && currentTrainerId) {
-            loadTrainerComments(currentTrainerId);
         }
+        // Removed comments tab handling
     });
 });
 
@@ -134,66 +133,7 @@ document.getElementById('cancelEdit').addEventListener('click', function() {
     document.getElementById('detailsTab').classList.add('active');
 });
 
-// Функция для загрузки комментариев (добавлена)
-function loadTrainerComments(trainerId, page = 1) {
-    const commentsContainer = document.getElementById('commentsContainer');
-    const loadMoreBtn = document.getElementById('loadMoreComments');
-    const avgRatingEl = document.getElementById('avgRating');
-    const ratingStarsEl = document.getElementById('ratingStars');
-    const totalReviewsEl = document.getElementById('totalReviews');
-    
-    // Показываем индикатор загрузки при первой странице
-    if (page === 1) {
-        commentsContainer.innerHTML = '<p>Завантаження відгуків...</p>';
-    }
-    
-    fetch(`/coaches/api/trainers/${trainerId}/comments?page=${page}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Помилка завантаження відгуків');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Обновляем информацию о рейтинге
-            avgRatingEl.textContent = data.avg_rating.toFixed(1);
-            
-            // Формируем звёзды для рейтинга
-            const fullStars = Math.floor(data.avg_rating);
-            const halfStar = data.avg_rating - fullStars >= 0.5;
-            const stars = '★'.repeat(fullStars) + (halfStar ? '⭐' : '') + '☆'.repeat(5 - fullStars - (halfStar ? 1 : 0));
-            ratingStarsEl.textContent = stars;
-            
-            totalReviewsEl.textContent = `Всього відгуків: ${data.total_comments}`;
-            
-            // Если это первая страница, очищаем контейнер
-            if (page === 1) {
-                commentsContainer.innerHTML = '';
-            }
-            
-            // Добавляем комментарии
-            if (data.comments && data.comments.length > 0) {
-                data.comments.forEach(comment => {
-                    commentsContainer.innerHTML += createCommentElement(comment);
-                });
-            } else if (page === 1) {
-                commentsContainer.innerHTML = '<p>Відгуки відсутні</p>';
-            }
-            
-            // Обновляем состояние кнопки "Загрузить ещё"
-            loadMoreBtn.style.display = data.has_more ? 'block' : 'none';
-            loadMoreBtn.dataset.page = page + 1;
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            if (page === 1) {
-                commentsContainer.innerHTML = '<p>Помилка завантаження відгуків</p>';
-            }
-            loadMoreBtn.style.display = 'none';
-        });
-}
-
-// Обновленная функция для загрузки данных о тренере
+// ONLY ONE DEFINITION OF loadTrainerData - Moved the complete version here
 function loadTrainerData(trainerId) {
     fetch(`/coaches/api/trainers/${trainerId}/details`)
         .then(response => {
@@ -203,32 +143,12 @@ function loadTrainerData(trainerId) {
             return response.json();
         })
         .then(data => {
+            console.log('Loaded trainer data:', data); // Debugging log
+            
             // Заполняем основную информацию
             document.getElementById('modalTrainerName').textContent = data.name;
             document.getElementById('modalTrainerPosition').textContent = data.position;
             document.getElementById('modalTrainerBio').textContent = data.description;
-            
-            // Статус тренера
-            // const statusEl = document.getElementById('modalTrainerStatus');
-            // statusEl.textContent = getStatusText(data.status);
-            // statusEl.className = 'trainer-status status-' + data.status;
-            
-            // Дополнительная информация
-            // document.getElementById('trainerSpecialization').textContent = data.specialization || 'Не вказано';
-            // document.getElementById('trainerExperience').textContent = data.experience || 'Не вказано';
-            
-            // Сертификаты - обновленный формат с маркерами
-            // const certificatesEl = document.getElementById('trainerCertificates');
-            // if (data.certificates && data.certificates.length > 0) {
-            //     let certificatesHtml = '<ul>';
-            //     data.certificates.forEach(cert => {
-            //         certificatesHtml += `<li>${cert.name} (${cert.year})</li>`;
-            //     });
-            //     certificatesHtml += '</ul>';
-            //     certificatesEl.innerHTML = certificatesHtml;
-            // } else {
-            //     certificatesEl.textContent = 'Не вказано';
-            // }
             
             // Устанавливаем фото тренера
             const photoSrc = data.photo || '/media/coaches/default.png';
@@ -239,18 +159,41 @@ function loadTrainerData(trainerId) {
             document.getElementById('editName').value = data.name;
             document.getElementById('editPosition').value = data.position;
             document.getElementById('editDescription').value = data.description;
-            // document.getElementById('editSpecialization').value = data.specialization || '';
-            // document.getElementById('editExperience').value = data.experience || '';
-            document.getElementById('editStatus').value = data.status;
+            
+            // Fix status setting - ensure it gets set properly
+            const statusSelect = document.getElementById('editStatus');
+            if (statusSelect && data.status) {
+                // If data.status is the code (e.g., 'active')
+                if (Array.from(statusSelect.options).some(option => option.value === data.status)) {
+                    statusSelect.value = data.status;
+                } 
+                // If data.status is the display text (e.g., 'Активний') - map it back to code
+                else {
+                    const statusMap = {
+                        'Активний': 'active',
+                        'Відпустка': 'vacation',
+                        'Хворіє': 'sick',
+                        'Неактивний': 'inactive'
+                    };
+                    
+                    const statusCode = statusMap[data.status];
+                    if (statusCode) {
+                        statusSelect.value = statusCode;
+                    }
+                }
+                
+                // For debugging - log what's happening
+                console.log('Setting status dropdown:', {
+                    'Received status': data.status,
+                    'Dropdown value set to': statusSelect.value
+                });
+            }
             
             // Расписание тренера
             loadTrainerSchedule(data.schedule);
             
             // Загружаем статистику
             loadTrainerStatistics(trainerId);
-            
-            // Загружаем комментарии
-            loadTrainerComments(trainerId);
             
             document.getElementById('trainerModal').style.display = 'block';
         })
@@ -288,13 +231,13 @@ function loadTrainerSchedule(scheduleData) {
 function loadTrainerStatistics(trainerId) {
     const statClientsTotal = document.getElementById('statClientsTotal');
     const statSessionsMonth = document.getElementById('statSessionsMonth');
-    const statRating = document.getElementById('statRating');
+    // Removed statRating
     const statActiveGroups = document.getElementById('statActiveGroups');
     
     // Показываем индикаторы загрузки
     statClientsTotal.textContent = '...';
     statSessionsMonth.textContent = '...';
-    statRating.textContent = '...';
+    // Removed statRating loading
     statActiveGroups.textContent = '...';
     
     fetch(`/coaches/api/trainers/${trainerId}/statistics`)
@@ -308,57 +251,22 @@ function loadTrainerStatistics(trainerId) {
             // Заполняем карточки со статистикой
             statClientsTotal.textContent = data.clients_total;
             statSessionsMonth.textContent = data.sessions_month;
-            statRating.textContent = data.rating.toFixed(1);
+            // Removed rating display
             statActiveGroups.textContent = data.active_groups;
             
             // Создаем график занятий за последние 6 месяцев
             createSessionsChart(data.sessions_history);
             
-            // Создаем график распределения типов занятий
-            // createSessionsTypeChart(data.sessions_types);
+            // Removed sessions type chart
         })
         .catch(error => {
             console.error('Ошибка:', error);
             statClientsTotal.textContent = 'Помилка';
             statSessionsMonth.textContent = 'Помилка';
-            statRating.textContent = 'Помилка';
+            // Removed rating error handling
             statActiveGroups.textContent = 'Помилка';
         });
 }
-
-// function createSessionsTypeChart(data) {
-//     const ctx = document.getElementById('sessionsTypeChart').getContext('2d');
-    
-//     // Безопасное уничтожение предыдущего графика, если он существует
-//     if (window.sessionsTypeChart instanceof Chart) {
-//         window.sessionsTypeChart.destroy();
-//     } else if (window.sessionsTypeChart) {
-//         // Если объект существует, но не является экземпляром Chart
-//         // Удаляем ссылку на него, чтобы избежать ошибок
-//         delete window.sessionsTypeChart;
-//     }
-    
-//     // Создаем новый график
-//     window.sessionsTypeChart = new Chart(ctx, {
-//         type: 'pie',
-//         data: {
-//             labels: Object.keys(data),
-//             datasets: [{
-//                 data: Object.values(data),
-//                 backgroundColor: [
-//                     'rgba(76, 175, 80, 0.7)',
-//                     'rgba(33, 150, 243, 0.7)',
-//                     'rgba(255, 193, 7, 0.7)',
-//                     'rgba(156, 39, 176, 0.7)'
-//                 ],
-//                 borderWidth: 1
-//             }]
-//         },
-//         options: {
-//             responsive: true
-//         }
-//     });
-// }
 
 function createSessionsChart(data) {
     const ctx = document.getElementById('sessionsChart').getContext('2d');
@@ -400,97 +308,16 @@ function createSessionsChart(data) {
     });
 }
 
-// Исправленная функция для загрузки статистики
-function loadTrainerStatistics(trainerId) {
-    const statClientsTotal = document.getElementById('statClientsTotal');
-    const statSessionsMonth = document.getElementById('statSessionsMonth');
-    const statRating = document.getElementById('statRating');
-    const statActiveGroups = document.getElementById('statActiveGroups');
-    
-    // Показываем индикаторы загрузки
-    statClientsTotal.textContent = '...';
-    statSessionsMonth.textContent = '...';
-    statRating.textContent = '...';
-    statActiveGroups.textContent = '...';
-    
-    fetch(`/coaches/api/trainers/${trainerId}/statistics`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Помилка завантаження статистики');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Заполняем карточки со статистикой
-            statClientsTotal.textContent = data.clients_total;
-            statSessionsMonth.textContent = data.sessions_month;
-            statRating.textContent = data.rating.toFixed(1);
-            statActiveGroups.textContent = data.active_groups;
-            
-            try {
-                // Создаем график занятий за последние 6 месяцев
-                if (data.sessions_history && data.sessions_history.length > 0) {
-                    createSessionsChart(data.sessions_history);
-                }
-                
-                // Создаем график распределения типов занятий
-                // if (data.sessions_types && Object.keys(data.sessions_types).length > 0) {
-                //     createSessionsTypeChart(data.sessions_types);
-                // }
-            } catch (chartError) {
-                console.error('Ошибка при создании графиков:', chartError);
-                
-                // Перезагружаем canvas элементы при ошибке
-                const sessionsChartCanvas = document.getElementById('sessionsChart');
-                const sessionsTypeChartCanvas = document.getElementById('sessionsTypeChart');
-                
-                if (sessionsChartCanvas) {
-                    const parent = sessionsChartCanvas.parentNode;
-                    parent.innerHTML = '<canvas id="sessionsChart"></canvas>';
-                }
-                
-                if (sessionsTypeChartCanvas) {
-                    const parent = sessionsTypeChartCanvas.parentNode;
-                    parent.innerHTML = '<canvas id="sessionsTypeChart"></canvas>';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            statClientsTotal.textContent = 'Помилка';
-            statSessionsMonth.textContent = 'Помилка';
-            statRating.textContent = 'Помилка';
-            statActiveGroups.textContent = 'Помилка';
-        });
-}
-
-// Обработчик для кнопки "Загрузить еще комментарии"
-document.getElementById('loadMoreComments').addEventListener('click', function() {
-    const page = parseInt(this.dataset.page || 2);
-    loadTrainerComments(currentTrainerId, page);
-});
-
-// Функция для создания элемента комментария
-function createCommentElement(comment) {
-    const date = new Date(comment.date);
-    const formattedDate = date.toLocaleDateString('uk-UA');
-    
-    const stars = '★'.repeat(comment.rating) + '☆'.repeat(5 - comment.rating);
-    
-    return `
-        <div class="comment-item">
-            <div class="comment-header">
-                <div class="comment-author">${comment.author}</div>
-                <div class="comment-date">${formattedDate}</div>
-            </div>
-            <div class="comment-rating">${stars}</div>
-            <div class="comment-text">${comment.text}</div>
-        </div>
-    `;
-}
-
 // Функция для обновления информации о тренере
 function updateTrainerInfo(formData) {
+    // Show loading state or disable the form during update
+    const submitBtn = document.querySelector('#editTrainerForm button[type="submit"]');
+    if (submitBtn) {
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Оновлення...';
+        submitBtn.disabled = true;
+    }
+
     fetch(`/coaches/api/trainers/${currentTrainerId}/update`, {
         method: 'POST',
         body: formData
@@ -502,14 +329,16 @@ function updateTrainerInfo(formData) {
         return response.json();
     })
     .then(data => {
-        // Показываем сообщение об успешном обновлении
-        alert('Інформацію про тренера успішно оновлено!');
+        console.log('Update successful, received data:', data); // Debugging log
         
         // Обновляем данные в модальном окне
-        loadTrainerData(currentTrainerId);
-        
+        // loadTrainerData(currentTrainerId);
+
         // Обновляем данные на карточке тренера
         updateTrainerCard(currentTrainerId, data);
+        
+        // // Show success message
+        // alert('Дані успішно оновлено!');
         
         // Переключаемся на вкладку с деталями
         tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -521,22 +350,51 @@ function updateTrainerInfo(formData) {
     .catch(error => {
         console.error('Ошибка:', error);
         alert('Помилка оновлення даних про тренера');
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitBtn) {
+            submitBtn.textContent = 'Зберегти';
+            submitBtn.disabled = false;
+        }
     });
 }
 
 // Функция для обновления карточки тренера на странице
 function updateTrainerCard(trainerId, data) {
     const trainerCard = document.querySelector(`.trainer-card[data-id="${trainerId}"]`);
-    if (!trainerCard) return;
+    if (!trainerCard) {
+        console.error('Cannot find trainer card with ID:', trainerId);
+        return;
+    }
     
-    trainerCard.querySelector('.trainer-name').textContent = data.name;
-    trainerCard.querySelector('.trainer-title').textContent = data.position;
-    trainerCard.querySelector('.trainer-bio').textContent = data.description;
+    console.log('Updating trainer card with data:', data); // Debugging log
+    
+    // Обновляем основную информацию
+    const nameEl = trainerCard.querySelector('.trainer-name');
+    if (nameEl) nameEl.textContent = data.name;
+    
+    const titleEl = trainerCard.querySelector('.trainer-title');
+    if (titleEl) titleEl.textContent = data.position;
+    
+    const bioEl = trainerCard.querySelector('.trainer-bio');
+    if (bioEl) bioEl.textContent = data.description;
     
     // Обновляем статус
     const statusEl = trainerCard.querySelector('.trainer-status');
-    statusEl.textContent = getStatusText(data.status);
-    statusEl.className = 'trainer-status status-' + data.status;
+    if (statusEl) {
+        statusEl.textContent = data.status;
+        statusEl.className = 'trainer-status status-' + data.status;
+    }
+    
+    // Обновляем и вторую отметку статуса, если есть
+    const availabilityEl = trainerCard.querySelector('.trainer-availability');
+    if (availabilityEl) {
+        availabilityEl.innerHTML = `
+            <span class="availability-indicator available"></span>
+            ${data.status}
+        `;
+    }
     
     // Обновляем статистику, если она есть в карточке
     const clientsAmountEl = trainerCard.querySelector('.stat-value:nth-child(1)');
@@ -549,30 +407,27 @@ function updateTrainerCard(trainerId, data) {
         groupsAmountEl.textContent = data.groups_amount;
     }
     
-    const rateEl = trainerCard.querySelector('.stat-value:nth-child(3)');
-    if (rateEl && data.rate !== undefined) {
-        rateEl.textContent = data.rate;
-    }
-    
     // Обновляем фото, если оно было изменено
     if (data.photo) {
         const photoEl = trainerCard.querySelector('.trainer-photo img');
-        photoEl.src = data.photo;
-        photoEl.alt = data.name;
+        if (photoEl) {
+            photoEl.src = data.photo;
+            photoEl.alt = data.name;
+        }
     }
 }
 
 // Функция для получения текстового представления статуса
-function getStatusText(status) {
-    const statusMap = {
-        'active': 'Активний',
-        'vacation': 'Відпустка',
-        'sick': 'Хворіє',
-        'inactive': 'Неактивний'
-    };
+// function getStatusText(status) {
+//     const statusMap = {
+//         'active': 'Активний',
+//         'vacation': 'Відпустка',
+//         'sick': 'Хворіє',
+//         'inactive': 'Неактивний'
+//     };
     
-    return statusMap[status] || 'Невідомий';
-}
+//     return statusMap[status] || 'Невідомий';
+// }
 
 // Функция для открытия модального окна тренера
 function openTrainerModal(trainerId) {
@@ -615,6 +470,7 @@ newPhotoInput.addEventListener('change', function() {
 });
 
 // Submit new trainer form
+// Submit new trainer form
 addTrainerForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -642,7 +498,65 @@ addTrainerForm.addEventListener('submit', function(e) {
             
             // Add new trainer card to the grid without reloading the page
             if (response.success && response.trainer) {
-                addTrainerCardToGrid(response.trainer);
+                const trainersGrid = document.querySelector('.trainers-grid');
+                
+                // Create the new card with EXACTLY the same structure as in coaches.html
+                const newTrainerCard = document.createElement('div');
+                newTrainerCard.className = 'trainer-card';
+                newTrainerCard.dataset.id = response.trainer.id;
+                
+                // Use the exact structure from your HTML example
+                newTrainerCard.innerHTML = `
+                    <div class="arch-decoration"></div>
+                    <div class="trainer-photo">
+                        <img src="${response.trainer.photo || '/media/coaches/default.png'}" alt="${response.trainer.name}">
+                        <div class="trainer-status status-${response.trainer.status}">${getStatusText(response.trainer.status)}</div>
+                    </div>
+                    <div class="trainer-info">
+                        <div class="trainer-name">${response.trainer.name}</div>
+                        <div class="trainer-title">${response.trainer.position}</div>
+                        <div class="trainer-bio">
+                            ${response.trainer.description}
+                        </div>
+                        <div class="trainer-availability">
+                            <span class="availability-indicator available"></span>
+                            ${response.trainer.status}
+                        </div>
+                        <div class="trainer-actions">
+                            <button class="action-button">Розклад</button>
+                            <button class="action-button">Редагувати</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to the grid
+                trainersGrid.appendChild(newTrainerCard);
+                
+                // Add event listeners to the new buttons
+                const scheduleButton = newTrainerCard.querySelector('.trainer-actions .action-button:first-child');
+                const editButton = newTrainerCard.querySelector('.trainer-actions .action-button:last-child');
+                
+                scheduleButton.addEventListener('click', function() {
+                    currentTrainerId = response.trainer.id;
+                    openTrainerModal(currentTrainerId);
+                    
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    document.querySelector('.tab-button[data-tab="schedule"]').classList.add('active');
+                    document.getElementById('scheduleTab').classList.add('active');
+                });
+                
+                editButton.addEventListener('click', function() {
+                    currentTrainerId = response.trainer.id;
+                    openTrainerModal(currentTrainerId);
+                    
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    document.querySelector('.tab-button[data-tab="edit"]').classList.add('active');
+                    document.getElementById('editTab').classList.add('active');
+                });
             } else {
                 // If we only get success status without trainer data, reload the page
                 window.location.reload();
@@ -659,7 +573,18 @@ addTrainerForm.addEventListener('submit', function(e) {
         });
 });
 
-// Function to create a new trainer
+// Also uncomment this function as you'll need it for status translation
+function getStatusText(status) {
+    const statusMap = {
+        'active': 'Активний',
+        'vacation': 'Відпустка',
+        'sick': 'Хворіє',
+        'inactive': 'Неактивний'
+    };
+    
+    return statusMap[status] || 'Невідомий';
+}
+// Modify your createNewTrainer function to load complete data after creation
 function createNewTrainer(formData) {
     return fetch('/coaches/api/trainers/create', {
         method: 'POST',
@@ -670,6 +595,27 @@ function createNewTrainer(formData) {
             throw new Error('Помилка створення тренера');
         }
         return response.json();
+    })
+    .then(data => {
+        // After creating, fetch the complete trainer details
+        // just like we do when opening an existing trainer
+        if (data.success && data.trainer && data.trainer.id) {
+            return fetch(`/coaches/api/trainers/${data.trainer.id}/details`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Помилка завантаження даних');
+                    }
+                    return response.json();
+                })
+                .then(fullTrainerData => {
+                    // Return both the original response and the full data
+                    return {
+                        success: data.success,
+                        trainer: fullTrainerData
+                    };
+                });
+        }
+        return data;
     });
 }
 
@@ -677,7 +623,7 @@ function createNewTrainer(formData) {
 function addTrainerCardToGrid(trainer) {
     const trainersGrid = document.querySelector('.trainers-grid');
     
-    const statusText = getStatusText(trainer.status);
+    const statusText = trainer.status;
     const photoSrc = trainer.photo || '/media/coaches/default.png';
     
     // Create new trainer card HTML
@@ -706,10 +652,6 @@ function addTrainerCardToGrid(trainer) {
                     <div class="stat-item">
                         <div class="stat-value">${trainer.groups_amount || 0}</div>
                         <div class="stat-label">Груп</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">${trainer.rate || '0.0'}</div>
-                        <div class="stat-label">Рейтинг</div>
                     </div>
                 </div>
                 <div class="trainer-actions">

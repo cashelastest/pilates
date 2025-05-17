@@ -131,14 +131,15 @@ function initializeEventHandlers() {
     document.getElementById('cancelAddMemberBtn').addEventListener('click', closeAddMemberModal);
     document.getElementById('saveAddMemberBtn').addEventListener('click', addMemberToGroup);
     
-    // Обработчики для модального окна добавления занятия
-    document.getElementById('addLessonBtn').addEventListener('click', openAddLessonModal);
+
+
+
     document.getElementById('closeAddLessonModal').addEventListener('click', closeAddLessonModal);
     document.getElementById('cancelAddLessonBtn').addEventListener('click', closeAddLessonModal);
     document.getElementById('saveAddLessonBtn').addEventListener('click', addLessonToGroup);
     
     // Обработчики для модального окна добавления расписания
-    document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
+    // document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
     document.getElementById('closeScheduleModal').addEventListener('click', closeScheduleModal);
     document.getElementById('cancelScheduleBtn').addEventListener('click', closeScheduleModal);
     document.getElementById('saveScheduleBtn').addEventListener('click', addScheduleItem);

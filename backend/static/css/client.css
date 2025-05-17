@@ -594,7 +594,19 @@
     cursor: pointer;
     color: var(--dark-gray);
 }
+.group-subscription-info {
+    background-color: #e3f2fd;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-left: 4px solid #2196f3;
+}
 
+.group-subscription-info p {
+    margin: 0;
+    color: #0d47a1;
+    font-size: 0.9rem;
+}
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
     #editScheduleBlock {

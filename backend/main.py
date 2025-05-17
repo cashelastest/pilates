@@ -26,3 +26,7 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 def home()->set:
     return {'home page'}
 
+# В main.py или run.py
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, limit_concurrency=100)
