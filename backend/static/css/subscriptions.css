@@ -1,0 +1,461 @@
+.lesson-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    transition: all 0.2s ease;
+}
+
+.lesson-item:hover {
+    background-color: #f2f2f2;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.lesson-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.lesson-date {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.lesson-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.lesson-status {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Status styles */
+.lesson-status.completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.lesson-status.scheduled {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.lesson-status.cancelled {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .lesson-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .lesson-info {
+        margin-bottom: 8px;
+        width: 100%;
+    }
+    
+    .lesson-status {
+        align-self: flex-start;
+    }
+}
+
+/* Schedule items in subscription details */
+.schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+
+.schedule-info {
+    display: flex;
+    flex: 1;
+    align-items: center;
+}
+
+.schedule-day {
+    font-weight: 500;
+    margin-right: 15px;
+    color: #333;
+    min-width: 100px;
+}
+
+.schedule-time {
+    color: #666;
+}
+
+.schedule-actions {
+    display: flex;
+}
+
+/* Button for schedule removal */
+.remove-schedule {
+    background: none;
+    border: none;
+    color: #F44336;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 8px;
+}
+
+.remove-schedule:hover {
+    color: #D32F2F;
+}
+.subscriptions-filters {
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-container {
+    margin-right: 0;
+    margin-bottom: 10px;
+}
+
+.filter-options {
+    flex-wrap: wrap;
+}
+
+.modal-overlay.active {
+    padding: 10px;
+}
+
+.form-row {
+    flex-direction: column;
+}
+
+/* Fix for tab styling */
+.subscription-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--light-wood);
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.tab-button.active {
+    color: var(--terracotta);
+    border-bottom: 3px solid var(--terracotta);
+}
+
+.subscription-tab-content {
+    display: none;
+}
+
+.subscription-tab-content.active {
+    display: block;
+}
+
+/* Card styling */
+.template-card, .subscription-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.template-card:hover, .subscription-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-active {
+    color: #4CAF50;
+}
+
+.status-inactive {
+    color: #F44336;
+}
+
+/* Progress bar styling */
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #E0E0E0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--terracotta);
+    border-radius: 4px;
+}
+
+/* Client avatar */
+.client-avatar {
+    width: 36px;
+    height: 36px;
+    background-color: var(--light-wood);
+    color: var(--dark-gray);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.subscription-client {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+/* Enhanced Subscription Card Styling */
+.subscription-card {
+  background-color: var(--warm-white);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.subscription-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: var(--terracotta);
+}
+
+/* Header section with client info and status */
+.subscription-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--light-wood);
+}
+
+.subscription-client {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.client-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: var(--peach);
+  color: var(--dark-gray);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.subscription-template {
+  font-size: 14px;
+  color: var(--light-gray);
+  margin-left: 52px; /* Aligns with text next to avatar */
+}
+
+/* Status badges */
+.subscription-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-active {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.status-inactive {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+/* Body section with details */
+.subscription-body {
+  padding: 0 0 15px 0;
+}
+
+.detail-item {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.detail-label {
+  color: var(--light-gray);
+  font-size: 14px;
+  min-width: 100px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+/* Progress bar styling */
+.subscription-progress {
+  margin-top: 15px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.progress-label span:first-child {
+  color: var(--light-gray);
+}
+
+.progress-label span:last-child {
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: var(--light-wood);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--terracotta);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Action buttons */
+.subscription-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--light-wood);
+}
+
+.action-button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 10px;
+  border: none;
+  transition: all 0.2s ease;
+  background-color: var(--cream);
+  color: var(--dark-gray);
+}
+
+.action-button:hover {
+  background-color: var(--peach);
+}
+
+.action-button.view-subscription {
+  background-color: var(--peach);
+  color: var(--dark-gray);
+}
+
+.action-button.view-subscription:hover {
+  background-color: var(--terracotta);
+}
+
+.action-button.action-button-cancel {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+.action-button.action-button-cancel:hover {
+  background-color: rgba(244, 67, 54, 0.2);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .subscription-header {
+    flex-direction: column;
+  }
+  
+  .subscription-status {
+    margin-top: 10px;
+    align-self: flex-start;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .detail-label {
+    margin-bottom: 4px;
+  }
+  
+  .subscription-actions {
+    flex-wrap: wrap;
+  }
+  
+  .action-button {
+    margin-bottom: 8px;
+  }
+}
+/* Responsive fixes */
+@media screen and (max-width: 768px) {
+    .subscriptions-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-container {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .filter-options {
+        flex-wrap: wrap;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+}

@@ -18,7 +18,11 @@ const GROUP_CODES = {
     GET_COACHES: 305,           // Получить список всех тренеров
     COACHES_DATA: 315           // Код для полученных данных о тренерах
 };
-
+// Глобальные переменные для пагинации
+let currentPage = 1;
+let clientsPerPage = 5;
+let filteredClients = [];
+let allClients = [];
 // Инициализация WebSocket-соединения
 function initWebSocket() {
     // Определяем URL для WebSocket
@@ -95,6 +99,8 @@ function handleSocketMessage(response) {
         case GROUP_CODES.COACHES_DATA:
             // Обновляем списки тренеров в формах
             updateCoachesList(response.data);
+            updateFilterCoachesList(response.data);
+
             break;
             
         case 200: // Код успешной операции
@@ -207,63 +213,131 @@ function deleteClient(clientId) {
     sendMessage(CLIENT_CODES.DELETE_CLIENT, { id: clientId });
 }
 
-// Обновление таблицы клиентов на основе полученных данных
 function updateClientsTable(clients) {
+    // Store all clients in the global variable
+    allClients = clients;
+    
+    // Apply current filter to the clients
+    applyFilters();
+}
+
+// Function to apply filters and update the table
+function applyFilters() {
+    const searchInput = document.querySelector('.search-input');
+    const searchValue = searchInput ? searchInput.value.toLowerCase() : '';
+    
+    // Filter clients based on search input
+    filteredClients = allClients.filter(client => {
+        const clientName = client.full_name.toLowerCase();
+        return clientName.includes(searchValue);
+    });
+    
+    // Update pagination
+    updatePagination();
+    
+    // Display clients for the current page
+    displayClientsForCurrentPage();
+}
+
+// Function to display clients for the current page
+function displayClientsForCurrentPage() {
     const tbody = document.querySelector('.clients-table tbody');
     if (!tbody) return;
     
-    // Очищаем таблицу
+    // Clear the table
     tbody.innerHTML = '';
     
-    // Заполняем таблицу данными
-    clients.forEach(client => {
-        // Получаем инициалы для аватара
+    // Calculate start and end index for the current page
+    const startIndex = (currentPage - 1) * clientsPerPage;
+    const endIndex = Math.min(startIndex + clientsPerPage, filteredClients.length);
+    
+    // Get clients for the current page
+    const clientsToDisplay = filteredClients.slice(startIndex, endIndex);
+    
+    // If no clients match the filter criteria
+    if (clientsToDisplay.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="6" style="text-align: center; padding: 20px;">
+                Немає клієнтів, що відповідають критеріям пошуку
+            </td>
+        `;
+        tbody.appendChild(emptyRow);
+        return;
+    }
+    
+    // Display clients in the table
+    clientsToDisplay.forEach(client => {
+        // Get initials for the avatar
         const names = client.full_name.split(' ');
         const initials = names.length > 1 
             ? (names[0][0] + names[1][0]).toUpperCase() 
             : (names[0][0] + (names[0][1] || '')).toUpperCase();
         
-        // Определяем статус клиента
+        // Determine client status
         const statusClass = client.is_active ? 'status-active' : 'status-inactive';
         const statusText = client.is_active ? 'Активний' : 'Неактивний';
         
-        // Форматируем дату
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
+        // Format date
+        function formatDate(dateStr, defaultMessage = 'Не має абонементу') {
+            if (!dateStr) return defaultMessage;
+            
             const date = new Date(dateStr);
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                return defaultMessage;
+            }
+            
             return date.toLocaleDateString('uk-UA');
-        };
+        }
         
-        // Создаем строку таблицы
+        
+        // Create table row
         const row = document.createElement('tr');
         row.setAttribute('data-id', client.id);
         row.setAttribute('data-username', client.username);
-        
-        row.innerHTML = `
-            <td>
-                <div class="client-name">
-                    <div class="client-avatar">${initials}</div>
-                    ${client.full_name}
-                </div>
-            </td>
-            <td>
-                <span class="status-indicator ${statusClass}"></span>
-                ${statusText}
-            </td>
-            <td>${formatDate(client.last_lesson_date)}</td>
-            <td>${client.lessons_used} з ${client.lessons_total}</td>
-            <td>${client.is_active 
-                ? `Дійсний до ${formatDate(client.subscription_end_date)}` 
-                : `Закінчився ${formatDate(client.subscription_end_date)}`}</td>
+        function getSubscriptionStatus(client) {
+            // Если нет даты окончания абонемента или она в неверном формате
+            if (!client.subscription_end_date || isNaN(new Date(client.subscription_end_date).getTime())) {
+                return "Не має абонементу";
+            }
+            
+            // Если у клиента есть активный абонемент
+            if (client.is_active) {
+                return `Дійсний до ${formatDate(client.subscription_end_date)}`;
+            } else {
+                return `Закінчився ${formatDate(client.subscription_end_date)}`;
+            }
+        }
+  
+    // Использование в коде создания строки таблицы:
+    row.innerHTML = `
+        <td>
+            <div class="client-name">
+                <div class="client-avatar">${initials}</div>
+                ${client.full_name}
+            </div>
+        </td>
+        <td>
+            <span class="status-indicator ${statusClass}"></span>
+            ${statusText}
+        </td>
+        <td>${formatDate(client.last_lesson_date, 'Немає занять')}</td>
+        <td>${client.lessons_used} з ${client.lessons_total}</td>
+        <td>${getSubscriptionStatus(client)}</td>
+
             <td class="client-actions">
                 <button class="client-action-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <a href = '/client/info/?username=${client.username}'>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11 4H4V20H20V13" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M18 2L21 5M20.4 2.6L15 8L14 10L16 9L21.4 3.6L20.4 2.6Z" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
+                    </a>
                 </button>
                 <button class="client-action-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
@@ -273,11 +347,94 @@ function updateClientsTable(clients) {
         tbody.appendChild(row);
     });
     
-    // Обновляем обработчики событий для строк таблицы
+    // Update event listeners for the table rows
     addTableEventListeners();
 }
 
-// Заполнение модального окна данными клиента
+// Function to update pagination controls
+function updatePagination() {
+    const paginationContainer = document.querySelector('.pagination');
+    if (!paginationContainer) return;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
+    
+    // Store the previous and next navigation buttons if they exist
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    // Clear current pagination
+    paginationContainer.innerHTML = '';
+    
+    // Re-add previous page button
+    if (prevBtn) {
+        paginationContainer.appendChild(prevBtn);
+    } else {
+        // Create a new previous button if it doesn't exist
+        const prevButton = document.createElement('div');
+        prevButton.className = 'page-nav';
+        prevButton.id = 'prevPage';
+        prevButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 6L9 12L15 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        paginationContainer.appendChild(prevButton);
+    }
+    
+    // Add page buttons
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('div');
+        pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.dataset.page = i; // Add data attribute for easier selection
+        pageBtn.addEventListener('click', function() {
+            currentPage = i;
+            displayClientsForCurrentPage();
+            updatePageButtonsActive();
+        });
+        paginationContainer.appendChild(pageBtn);
+    }
+    
+    // If no pages, add page 1
+    if (totalPages === 0) {
+        const pageBtn = document.createElement('div');
+        pageBtn.className = 'page-btn active';
+        pageBtn.textContent = '1';
+        pageBtn.dataset.page = 1;
+        paginationContainer.appendChild(pageBtn);
+    }
+    
+    // Re-add next page button
+    if (nextBtn) {
+        paginationContainer.appendChild(nextBtn);
+    } else {
+        // Create a new next button if it doesn't exist
+        const nextButton = document.createElement('div');
+        nextButton.className = 'page-nav';
+        nextButton.id = 'nextPage';
+        nextButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 6L15 12L9 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        paginationContainer.appendChild(nextButton);
+    }
+    
+    // Update navigation buttons functionality
+    setupPaginationHandlers();
+}
+function updatePageButtonsActive() {
+    const pageButtons = document.querySelectorAll('.page-btn');
+    pageButtons.forEach(button => {
+        // Use data attribute for more reliable comparison
+        if (parseInt(button.dataset.page) === currentPage) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+}
 // Заполнение модального окна данными клиента
 function fillClientModal(client) {
     console.log('Данные клиента для заполнения формы:', client); // Отладочный вывод
@@ -317,8 +474,7 @@ function fillClientModal(client) {
     const infoItems = document.querySelectorAll('#info-tab .info-grid .info-item');
     
     // Дата рождения
-    infoItems[0].querySelector('.info-value').textContent = formatDate(client.birth_date);
-    
+    infoItems[0].querySelector('.info-value').textContent = formatDate(client.birth_date, 'Не вказано');
     // Определяем, какой формат данных для пола используется в системе
     let genderText = 'Не указан';
     
@@ -446,8 +602,8 @@ function updateSubscriptionsTab(subscriptions) {
             membershipCard.querySelector('.membership-title').textContent = `Абонемент на ${activeSubscription.lessons_total} занять`;
             
             const infoItems = membershipCard.querySelectorAll('.info-item');
-            infoItems[0].querySelector('.info-value').textContent = formatDate(activeSubscription.start_date);
-            infoItems[1].querySelector('.info-value').textContent = formatDate(activeSubscription.end_date);
+            infoItems[0].querySelector('.info-value').textContent = formatDate(subscription.start_date);
+            infoItems[1].querySelector('.info-value').textContent = formatDate(subscription.end_date);
             
             const progressLabel = membershipCard.querySelector('.progress-label span:last-child');
             progressLabel.textContent = `${activeSubscription.lessons_used} из ${activeSubscription.lessons_total}`;
@@ -475,9 +631,9 @@ function updateSubscriptionsTab(subscriptions) {
             const historyItem = document.createElement('div');
             historyItem.className = 'history-item';
             historyItem.innerHTML = `
-                <div class="history-desc">Абонемент на ${sub.lessons_total} занять</div>
-                <div class="history-date">${formatDate(sub.start_date)} - ${formatDate(sub.end_date)}</div>
-            `;
+            <div class="history-desc">${lesson.group_name} - ${lesson.lesson_type}</div>
+            <div class="history-date">${formatDate(lesson.date, 'Дата не вказана')}</div>
+        `;
             historySection.appendChild(historyItem);
         });
         
@@ -547,22 +703,23 @@ function addTableEventListeners() {
     rows.forEach(row => {
         row.addEventListener('click', function(e) {
             // Игнорируем клики по кнопкам действий
-            if (e.target.closest('.client-action-btn')) {
-                return;
+            if (e.target.closest('.client-action-btn:last-child')) {
+                sendMessage(code = 407, {username:  this.getAttribute('data-username')})
+                return
             }
+            //~ If needed we will make overlay
+            // // Получаем имя пользователя
+            // const username = this.getAttribute('data-username');
             
-            // Получаем имя пользователя
-            const username = this.getAttribute('data-username');
+            // // Запрашиваем данные клиента
+            // getClientData(username);
             
-            // Запрашиваем данные клиента
-            getClientData(username);
+            // // Открываем модальное окно
+            // document.getElementById('clientModal').classList.add('active');
+            // document.body.style.overflow = 'hidden';
             
-            // Открываем модальное окно
-            document.getElementById('clientModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            // Reset the add client form if needed
-            document.getElementById('addClientForm').reset();
+            // // Reset the add client form if needed
+            // document.getElementById('addClientForm').reset();
         });
     }
     )}
@@ -715,68 +872,43 @@ function addTableEventListeners() {
     });
 
 
-// Обработчик поиска клиентов
+
 function setupSearchHandler() {
     const searchInput = document.querySelector('.search-input');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const searchValue = this.value.toLowerCase();
-            
-            document.querySelectorAll('.clients-table tbody tr').forEach(row => {
-                const clientName = row.querySelector('.client-name').textContent.toLowerCase();
-                
-                if (clientName.includes(searchValue)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+            // Reset to first page when filtering
+            currentPage = 1;
+            applyFilters();
         });
     }
 }
-
-// Обработчики пагинации
 function setupPaginationHandlers() {
-    const pageButtons = document.querySelectorAll('.page-btn');
-    pageButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Снимаем активный класс со всех кнопок
-            pageButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // Добавляем активный класс на текущую кнопку
-            this.classList.add('active');
-            
-            // В реальном приложении здесь должен быть код для запроса новой страницы клиентов
-            // Например:
-            // getClientsPage(this.textContent);
-        });
-    });
-    
-    // Кнопки навигации (предыдущая/следующая страница)
-    const navButtons = document.querySelectorAll('.page-nav');
-    navButtons.forEach((button, index) => {
-        button.addEventListener('click', function() {
-            const activePage = document.querySelector('.page-btn.active');
-            if (activePage) {
-                const currentPage = parseInt(activePage.textContent);
-                let newPage;
-                
-                // Определяем, какую страницу запрашивать (предыдущую или следующую)
-                if (index === 0) { // Предыдущая страница
-                    newPage = Math.max(currentPage - 1, 1);
-                } else { // Следующая страница
-                    const maxPage = document.querySelectorAll('.page-btn').length;
-                    newPage = Math.min(currentPage + 1, maxPage);
-                }
-                
-                // Находим кнопку с нужной страницей и имитируем клик по ней
-                const pageToClick = document.querySelector(`.page-btn:nth-child(${newPage})`);
-                if (pageToClick) {
-                    pageToClick.click();
-                }
+    // Previous page button
+    const prevPageBtn = document.getElementById('prevPage');
+    if (prevPageBtn) {
+        prevPageBtn.onclick = function() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayClientsForCurrentPage();
+                updatePageButtonsActive();
             }
-        });
-    });
+        };
+    }
+    
+    // Next page button
+    const nextPageBtn = document.getElementById('nextPage');
+    if (nextPageBtn) {
+        nextPageBtn.onclick = function() {
+            const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                console.log(`Current page: ${currentPage}`);
+                displayClientsForCurrentPage();
+                updatePageButtonsActive();
+            }
+        };
+    }
 }
 
 // Обработчик экспорта данных
@@ -791,14 +923,186 @@ function setupExportHandler() {
 }
 
 // Обработчик для кнопки фильтров
+
+// Enhanced filter button setup
 function setupFilterHandler() {
     const filterBtn = document.querySelector('.filter-btn');
     if (filterBtn) {
         filterBtn.addEventListener('click', function() {
-            // В реальном приложении здесь должен быть код для отображения фильтров
-            alert('Функціонал фільтрів буде реалізовано пізніше');
+            // Create and display filter modal
+            showFilterModal();
         });
     }
+}
+
+function showFilterModal() {
+    // Check if the filter modal already exists
+    let filterModal = document.getElementById('filterModal');
+    
+    // Create modal if it doesn't exist
+    if (!filterModal) {
+        filterModal = document.createElement('div');
+        filterModal.id = 'filterModal';
+        filterModal.className = 'modal-overlay';
+        
+        filterModal.innerHTML = `
+            <div class="client-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">Фільтри</h2>
+                    <button class="modal-close" id="closeFilterModal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="client-info">
+                    <form id="filterForm">
+                        <div class="form-row">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" name="status">
+                                <option value="all">Всі</option>
+                                <option value="active">Активні</option>
+                                <option value="inactive">Неактивні</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">Тренер</label>
+                            <select class="form-select" name="coach" id="filterCoach">
+                                <option value="all">Всі</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label class="form-label">Останнє заняття від</label>
+                                <input type="date" class="form-input" name="lastLessonFrom">
+                            </div>
+                            <div class="form-row">
+                                <label class="form-label">Останнє заняття до</label>
+                                <input type="date" class="form-input" name="lastLessonTo">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="modal-btn cancel-btn" id="resetFilters">Скинути</button>
+                    <button class="modal-btn save-btn" id="applyFilters">Застосувати</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(filterModal);
+        
+        // Get coach list for filter
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            sendMessage(GROUP_CODES.GET_COACHES);
+        }
+        
+        // Add event listeners for filter modal
+        document.getElementById('closeFilterModal').addEventListener('click', function() {
+            filterModal.classList.remove('active');
+        });
+        
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            document.getElementById('filterForm').reset();
+        });
+        
+        document.getElementById('applyFilters').addEventListener('click', function() {
+            // Apply advanced filters
+            applyAdvancedFilters();
+            // Close modal
+            filterModal.classList.remove('active');
+        });
+        
+        // Close modal on overlay click
+        filterModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    }
+    
+    // Show the modal
+    filterModal.classList.add('active');
+}
+
+// Function to update coach list in filter modal
+function updateFilterCoachesList(coaches) {
+    const filterCoachSelect = document.getElementById('filterCoach');
+    if (filterCoachSelect) {
+        // Clear existing options (except 'All')
+        while (filterCoachSelect.options.length > 1) {
+            filterCoachSelect.remove(1);
+        }
+        
+        // Add coaches to the list
+        coaches.forEach(coach => {
+            const option = document.createElement('option');
+            option.value = coach.id;
+            option.textContent = coach.name;
+            filterCoachSelect.appendChild(option);
+        });
+    }
+}
+
+// Function to apply advanced filters
+function applyAdvancedFilters() {
+    const form = document.getElementById('filterForm');
+    if (!form) return;
+    
+    const statusFilter = form.elements['status'].value;
+    const coachFilter = form.elements['coach'].value;
+    console.log(`Coach choosed ${coachFilter}`)
+    const lastLessonFromFilter = form.elements['lastLessonFrom'].value;
+    const lastLessonToFilter = form.elements['lastLessonTo'].value;
+    
+    // Filter clients based on criteria
+    filteredClients = allClients.filter(client => {
+        // Status filter
+        console.log(client)
+        if (statusFilter !== 'all') {
+            const isActive = statusFilter === 'active';
+            if (client.is_active !== isActive) return false;
+        }
+        
+        // Coach filter
+        if (coachFilter !== 'all' && client.coach_id != coachFilter) {
+            return false;
+        }
+        
+        // Last lesson date filters
+        if (lastLessonFromFilter && client.last_lesson_date) {
+            const lastLessonDate = new Date(client.last_lesson_date);
+            const fromDate = new Date(lastLessonFromFilter);
+            if (lastLessonDate < fromDate) return false;
+        }
+        
+        if (lastLessonToFilter && client.last_lesson_date) {
+            const lastLessonDate = new Date(client.last_lesson_date);
+            const toDate = new Date(lastLessonToFilter);
+            toDate.setHours(23, 59, 59); // End of the day
+            if (lastLessonDate > toDate) return false;
+        }
+        
+        // Apply text search filter too
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput && searchInput.value) {
+            const searchValue = searchInput.value.toLowerCase();
+            return client.full_name.toLowerCase().includes(searchValue);
+        }
+        
+        return true;
+    });
+    
+    // Reset to first page
+    currentPage = 1;
+    
+    // Update pagination and display clients
+    updatePagination();
+    displayClientsForCurrentPage();
 }
 
 // Инициализация всех обработчиков при загрузке страницы
@@ -899,39 +1203,39 @@ function setupModalEventListeners() {
         });
     }
     
-    const saveNewClientBtn = document.getElementById('saveNewClient');
-    if (saveNewClientBtn) {
-        saveNewClientBtn.addEventListener('click', function() {
-            const form = document.getElementById('addClientForm');
+    // const saveNewClientBtn = document.getElementById('saveNewClient');
+    // if (saveNewClientBtn) {
+    //     saveNewClientBtn.addEventListener('click', function() {
+    //         const form = document.getElementById('addClientForm');
             
-            // Валидация формы
-            const fullName = form.querySelector('input[name="fullName"]').value.trim();
-            if (!fullName) {
-                alert('Введіть імʼя та прізвище клієнта');
-                return;
-            }
+    //         // Валидация формы
+    //         const fullName = form.querySelector('input[name="fullName"]').value.trim();
+    //         if (!fullName) {
+    //             alert('Введіть імʼя та прізвище клієнта');
+    //             return;
+    //         }
             
-            // Collect data from the form
-            const clientData = {
-                username: fullName.toLowerCase().replace(/\s+/g, '.'),
-                full_name: fullName,
-                phone: form.querySelector('input[name="phone"]').value.trim() || '',
-                email: form.querySelector('input[name="email"]').value.trim() || '',
-                birth_date: form.querySelector('input[name="birthdate"]').value || null,
-                gender: form.querySelector('select[name="gender"]').value,
-                is_active: form.querySelector('select[name="status"]').value === 'active',
-                comments: form.querySelector('textarea[name="comments"]').value.trim() || '',
-                coach_id: form.querySelector('select[name="coach"]').value || null
-            };
+    //         // Collect data from the form
+    //         const clientData = {
+    //             username: fullName.toLowerCase().replace(/\s+/g, '.'),
+    //             full_name: fullName,
+    //             phone: form.querySelector('input[name="phone"]').value.trim() || '',
+    //             email: form.querySelector('input[name="email"]').value.trim() || '',
+    //             birth_date: form.querySelector('input[name="birthdate"]').value || null,
+    //             gender: form.querySelector('select[name="gender"]').value,
+    //             is_active: form.querySelector('select[name="status"]').value === 'active',
+    //             comments: form.querySelector('textarea[name="comments"]').value.trim() || '',
+    //             coach_id: form.querySelector('select[name="coach"]').value || null
+    //         };
             
-            // Send request to create new client
-            createClient(clientData);
+    //         // Send request to create new client
+    //         createClient(clientData);
             
-            // Close the modal
-            document.getElementById('addClientModal').classList.remove('active');
-            document.body.style.overflow = '';
-        });
-    }
+    //         // Close the modal
+    //         document.getElementById('addClientModal').classList.remove('active');
+    //         document.body.style.overflow = '';
+    //     });
+    // }
     
     // Обработчик для кнопки закрытия модального окна
     const closeBtn = document.getElementById('closeModal');

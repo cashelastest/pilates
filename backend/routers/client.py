@@ -1,13 +1,11 @@
 from fastapi import APIRouter,Request
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.websockets import WebSocket
 from connection import Connection
-from models import Client, Lesson, Coach, Subscription, SubscriptionSchedule
+from models import Client, Lesson, Subscription, SubscriptionSchedule
 from datetime import datetime
-import time
-from utils import check_is_used_lesson,generate_dates
-import string
+from utils import generate_dates
+
 client_router = APIRouter(prefix='/client', tags = ['client'])
 templates = Jinja2Templates(directory='templates')
 
@@ -47,7 +45,7 @@ class ClientManager(Manager):
             "username":username,
             "date_of_birth":datetime.strftime(client.date_of_birth, "%Y-%m-%d"),
             "sex":client.sex,
-            "coach_name":client.coach.name,
+            "coach_name":client.coach.name if client.coach else 'Не призначено',
             "description":client.description
             }
         }
@@ -68,7 +66,7 @@ class ClientManager(Manager):
 
         for subscription in subs:
         
-            used_lessons = len([0 for lesson in subscription.lessons if check_is_used_lesson(lesson)])
+            used_lessons = len([0 for lesson in subscription.lessons if lesson.is_used])
             data.append(
                 {
                 "id":subscription.id,
@@ -103,10 +101,11 @@ class ClientManager(Manager):
         except ValueError:
             print('ERROR template_id is not an int type')
             return
-
+        client = self.session.query(Client).filter(Client.username == data.get("client_id")).first()
+        print(f"CLIENT ID IN ADDING SUBS {client.id}")
         subscription = Subscription(
             template_id = template_id,
-            client_id = data.get("client_id")
+            client_id = client.id
         )
 
         self.session.add(subscription)
@@ -133,7 +132,7 @@ class ClientManager(Manager):
                 end_time = datetime.strptime(dates[lesson_index][2],"%H:%M"),
                 is_used= False,
                 subscription_id = subscription.id,
-                client_id = data.get("client_id"),
+                client_id = client.id,
                 coach_id = subscription.template.coach.id
             )
             lessons.append(lesson)
@@ -211,7 +210,8 @@ class ClientManager(Manager):
                 )
                 lessons.append(lesson)
             self.session.add_all(lessons)
-            
+    def roll (self):
+        self.session.rollback()
             # for _ in subscription.total_lessons:
             #     lesson = Lesson(
 

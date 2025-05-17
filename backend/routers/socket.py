@@ -41,8 +41,12 @@ async def dashboard_socket(ws:WebSocket):
                 case 195:
                     await clinet_manager.update_client_data(data=data.get('client'))
                 case 196:
-                    await clinet_manager.add_subscription_to_user(data=data.get('data'))
-
+                    if not await clinet_manager.add_subscription_to_user(data=data.get('data')):
+                        clinet_manager.roll()
+                    await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
+                    await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
+                    await clinet_manager.get_subs(ws, data.get("username"))
+ 
                 case 197:
                     await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
                     print('Successfully worked with code 197')
@@ -60,6 +64,8 @@ async def dashboard_socket(ws:WebSocket):
                 case 305:
                     print("working on code 305")
                     await group_manager.get_coaches(ws =ws)
+                case 317:
+                    await group_manager.get_group_schedules(group_id=data.get("group_id"), ws=ws)
                 case 320:
                     await group_manager.create_group(data=data.get('group'))
                     await group_manager.get_group_and_coach(ws=ws)
@@ -86,16 +92,21 @@ async def dashboard_socket(ws:WebSocket):
                     await group_manager.get_group_details(ws=ws, id = lesson.group_id)
                 case 400:
                     await clients_manager.get_all_clients(ws=ws)
-                case 401:
-                    await clients_manager.get_client(data.get("username"), ws)
-                case 402:
-                    await clients_manager.client_data(data.get('client'), ws=ws)
-                case 403:
-                    await clients_manager.get_subscriptions(data.get('username'), ws)
-                case 404:
-                    await clients_manager.get_clients_lessons(username=data.get('username'), ws=ws)
-                # case 406:
-                #     await clients_manager.create_client(data.get('client')) 
+                #~ we would make it if buyer ask for this
+                # case 401:
+                #     await clients_manager.get_client(data.get("username"), ws)
+                # case 402:
+                #     await clients_manager.client_data(data.get('client'), ws=ws)
+                # case 403:
+                #     await clients_manager.get_subscriptions(data.get('username'), ws)
+                # case 404:
+                #     await clients_manager.get_clients_lessons(username=data.get('username'), ws=ws)
+                case 406:
+                    await clients_manager.create_client(data.get('client'))
+                    await clients_manager.get_all_clients(ws=ws)
+                case 407:
+                    await clients_manager.delete_client(data.get("username"))
+                    await clients_manager.get_all_clients(ws=ws)
                 case _:
                     print('don`t understand')
                     print(data)

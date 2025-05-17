@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.websockets import WebSocket
-from fastapi.responses import HTMLResponse
+
 from routers.client import Manager
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 from models import Client
+from utils import custom_translit
 clients_router = APIRouter(prefix="/clients")
 
 templates = Jinja2Templates(directory='templates')
@@ -17,10 +18,11 @@ class ClientsManager(Manager):
             "username": client.username,
             "full_name":client.name,
             "is_active":client.status,
-            "last_lesson_date":client.lessons[-1].date.strftime( "%Y-%m-%d"),
+            "coach_id":client.coach_id,
+            "last_lesson_date":client.lessons[-1].date.strftime( "%Y-%m-%d") if client.lessons else "No lessons",
             "lessons_total": len(client.lessons),
             "lessons_used": len([1 for lesson in client.lessons if lesson.is_used]),
-            "subscription_end_date":client.subscriptions[-1].template.valid_until.strftime( "%Y-%m-%d")
+            "subscription_end_date":client.subscriptions[-1].template.valid_until.strftime( "%Y-%m-%d") if client.subscriptions else "No subscriptions"
             } for client in clients
         ]
 
@@ -99,16 +101,37 @@ class ClientsManager(Manager):
                 "coach_name":client.coach.name,
             })
         await ws.send_json({'code':404, "data":data})
-#~ not implemented (when i ll stop fuck with client main page, i ll start with THIS one)
-    # async def create_client(self, client_data):
-    #     client = Client(
-    #         username = client_data.get('username'),
-    #         full_name = client_data.get('full_name'),
-    #         email = client_data.get("email"),
-    #         phone = client_data.get("phone"),
-    #         date_of_birth = datetime.strftime(client_data.get("birth_date"),"%Y-%m-%d")
-    #     )
 
+
+    def username_exist(self, username):
+        return self.session.query(Client).filter(Client.username == username).first()
+    async def create_client(self, client_data):
+        username = custom_translit(client_data.get('username'))
+        if self.username_exist(username):
+            raise Exception('Username exists')
+        client = Client(
+            username = username,
+            name = client_data.get('full_name'),
+            email = client_data.get("email"),
+            phone = client_data.get("phone"),
+            balance = 0,
+            joined = datetime.now(),
+            date_of_birth = datetime.strptime(client_data.get("birth_date"),"%Y-%m-%d"),
+            sex =1 if client_data.get("gender") == "female" else 0,
+            status = client_data.get('is_active'),
+            description = client_data.get("comments"),
+            
+        )
+        if client_data.get('caoch_id'):
+            client.coach_id = client_data.get("coach_id")
+        self.session.add(client)
+        print(client.__dict__)
+        self.session.commit()
+    async def delete_client(self, username):
+        client = self.session.query(Client).filter(Client.username == username).first()
+        self.session.delete(client)
+        self.session.commit()
+    
     # pass
 
 clients_manager = ClientsManager()
@@ -117,19 +140,3 @@ def get_clients(request:Request):
     return templates.TemplateResponse(
         request=request, name = 'clients.html'
     )
-
-{'code': 196, 
- 'data': 
- {'client_id': 1, 
-  'template': '4', 
-  'schedules': 
-  [
-      {'day_of_the_week': 2, 
-       'start_time': '19:00', 
-       'end_time': '20:30'}, 
-       {'day_of_the_week': 5, 
-        'start_time': '15:00', 
-        'end_time': '17:30'}
-        ]
-        }
-        }

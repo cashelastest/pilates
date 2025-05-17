@@ -11,7 +11,7 @@
     align-items: center;
     z-index: 1000;
     opacity: 0;
-    visibility: hidden;
+    visibility:visible;
     transition: all 0.3s ease;
 }
 

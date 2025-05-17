@@ -5,6 +5,7 @@ let currentGroup = null;
 let availableClients = [];
 let coaches = [];
 let lessons = [];
+let schedules = []; // Временное хранение расписаний для текущей группы
 
 // DOM-элементы
 const groupsGrid = document.getElementById('groupsGrid');
@@ -18,15 +19,49 @@ const groupModal = document.getElementById('groupModal');
 const groupDetailsModal = document.getElementById('groupDetailsModal');
 const addMemberModal = document.getElementById('addMemberModal');
 const addLessonModal = document.getElementById('addLessonModal');
+const scheduleModal = document.getElementById('scheduleModal'); // Модальное окно расписания
+
+// Дополнение существующих кодов API новыми кодами для работы с расписаниями
+// Предполагается, что GROUP_API_CODES уже определено в другом файле
+if (typeof GROUP_API_CODES !== 'undefined') {
+    // Добавляем только новые коды, которых нет
+    GROUP_API_CODES.GROUP_SCHEDULES = GROUP_API_CODES.GROUP_SCHEDULES || 317;
+    GROUP_API_CODES.ADD_GROUP_SCHEDULE = GROUP_API_CODES.ADD_GROUP_SCHEDULE || 318;
+    GROUP_API_CODES.REMOVE_GROUP_SCHEDULE = GROUP_API_CODES.REMOVE_GROUP_SCHEDULE || 319;
+} else {
+    // Если по какой-то причине GROUP_API_CODES не определено, создаем его
+    window.GROUP_API_CODES = {
+    GET_GROUPS: 300,             // Было 301
+    GET_GROUP_DETAILS: 301,      // Было 302
+    CREATE_GROUP: 320,           // Было 303
+    UPDATE_GROUP: 321,           // Добавлено для редактирования существующей группы
+    DELETE_GROUP: 322,           // Было 304
+    GET_COACHES: 305,            // Без изменений
+    GET_CLIENTS_DATA: 304,       // Было 306
+    ADD_MEMBER: 330,             // Было 307
+    REMOVE_MEMBER: 331,          // Было 308
+    ADD_GROUP_LESSON: 340,       // Было 309
+    CANCEL_GROUP_LESSON: 341,    // Было 310
+    
+    // Коды ответов бэкенда
+    GROUPS_DATA: 310,            // Было 315
+    GROUP_DETAILS: 311,          // Новый код для данных о группе
+    GROUP_MEMBERS: 312,          // Было 311
+    GROUP_LESSONS: 313,          // Было 312
+    CLIENTS_DATA: 314,           // Было 313
+    COACH_DETAILS: 315,          // Было 316
+    
+    // Коды для расписаний (оставляем как есть)
+    GROUP_SCHEDULES: 317,
+    ADD_GROUP_SCHEDULE: 318,
+    REMOVE_GROUP_SCHEDULE: 319
+};
+}
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     // Инициализация WebSocket соединения (если используется)
     initializeWebSocket();
-    
-    // Загрузка данных
-    console.log(27)
-
     
     // Инициализация обработчиков событий
     initializeEventHandlers();
@@ -41,7 +76,6 @@ function initializeWebSocket() {
             window.ws.onopen = function() {
                 console.log('WebSocket соединение установлено');
                 loadGroups();
-                console.log(29);
                 loadCoaches();
             };
             
@@ -103,6 +137,12 @@ function initializeEventHandlers() {
     document.getElementById('cancelAddLessonBtn').addEventListener('click', closeAddLessonModal);
     document.getElementById('saveAddLessonBtn').addEventListener('click', addLessonToGroup);
     
+    // Обработчики для модального окна добавления расписания
+    document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
+    document.getElementById('closeScheduleModal').addEventListener('click', closeScheduleModal);
+    document.getElementById('cancelScheduleBtn').addEventListener('click', closeScheduleModal);
+    document.getElementById('saveScheduleBtn').addEventListener('click', addScheduleItem);
+    
     // Обработчики вкладок в деталях группы
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
@@ -156,7 +196,7 @@ function loadGroups() {
 function loadCoaches() {
     if (window.ws && window.ws.readyState === WebSocket.OPEN) {
         window.ws.send(JSON.stringify({
-            code: 305 // Предполагаемый код для получения тренеров
+            code: GROUP_API_CODES.GET_COACHES
         }));
     } else {
         coaches = MOCK_COACHES;
@@ -215,6 +255,20 @@ function loadGroupDetails(groupId) {
     }
 }
 
+// Загрузка расписаний группы
+function loadGroupSchedules(groupId) {
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        window.ws.send(JSON.stringify({
+            code: GROUP_API_CODES.GROUP_SCHEDULES,
+            group_id: groupId
+        }));
+    } else {
+        // Имитация загрузки расписаний для тестирования
+        schedules = MOCK_GROUP_SCHEDULES[groupId] || [];
+        renderGroupSchedules(schedules);
+    }
+}
+
 function openGroupDetailsModal(group) {
     currentGroup = group;
     
@@ -232,6 +286,9 @@ function openGroupDetailsModal(group) {
     
     // Отображение занятий группы
     renderGroupLessons(lessons || [], 'all');
+    
+    // Загружаем и отображаем расписания группы
+    loadGroupSchedules(group.id);
     
     // Активация первой вкладки
     document.querySelector('.tab-button[data-tab="members"]').click();
@@ -266,12 +323,32 @@ function processWebSocketMessage(data) {
             
         case GROUP_API_CODES.GROUP_LESSONS:
             if (currentGroup) {
-                lessons = data.data
+                lessons = data.data;
                 renderGroupLessons(data.data, 'all');
             }
             break;
             
+        case GROUP_API_CODES.GROUP_SCHEDULES:
+            if (currentGroup) {
+                schedules = data.data;
+                renderGroupSchedules(data.data);
+            }
+            break;
 
+        case GROUP_API_CODES.ADD_GROUP_SCHEDULE:
+            if (currentGroup) {
+                // Обновляем расписания и закрываем модальное окно
+                loadGroupSchedules(currentGroup.id);
+                closeScheduleModal();
+            }
+            break;
+            
+        case GROUP_API_CODES.REMOVE_GROUP_SCHEDULE:
+            if (currentGroup) {
+                // Просто обновляем расписания
+                loadGroupSchedules(currentGroup.id);
+            }
+            break;
         case GROUP_API_CODES.COACH_DETAILS:
             // Обработка полученных данных о тренере
             console.log("Received coach list:", data.data);
@@ -297,6 +374,7 @@ function updateGroupCoachSelection(coachId) {
     
     coachSelect.value = coachId.toString();
 }
+
 // Фильтрация групп и обновление отображения
 function filterAndRenderGroups() {
     const searchText = groupSearch.value.toLowerCase();
@@ -409,9 +487,12 @@ function openCreateGroupModal() {
         coachSelect.appendChild(option);
     });
     
+    // Очищаем список расписаний
+    schedules = [];
+    document.getElementById('schedulesList').innerHTML = '';
+    
     groupModal.classList.add('active');
 }
-
 
 function processCoachDetails(coachData) {
     // Сохраняем данные тренера для использования при заполнении формы
@@ -440,20 +521,14 @@ function processCoachDetails(coachData) {
     }
 }
 
-
-
 function loadCoaches() {
     console.log("Loading coaches...");
-        console.log("Sending request for coaches list");
-        window.ws.send(JSON.stringify({
-            code: GROUP_API_CODES.GET_COACHES
+    console.log("Sending request for coaches list");
+    window.ws.send(JSON.stringify({
+        code: GROUP_API_CODES.GET_COACHES
     }));
-    // } else {
-    //     console.log("Using mock coaches data");
-    //     coaches = MOCK_COACHES;
-    //     populateCoachFilter();
-    // }
 }
+
 function openEditGroupModal() {
     const group = currentGroup;
     
@@ -474,29 +549,31 @@ function openEditGroupModal() {
     const coachSelect = document.getElementById('groupCoach');
     
     // Добавляем всех доступных тренеров
-// Сначала очищаем селект
-coachSelect.innerHTML = '';
-
-// Добавляем все опции
-coaches.forEach(coach => {
-    const option = document.createElement('option');
-    option.value = coach.id;
-    option.textContent = coach.name;
+    coachSelect.innerHTML = '';
     
-    // Указываем selected для нужного тренера
-    if (coach.name === group.coach_name) {
-        option.selected = true;
-        console.log("Установлен выбранный тренер:", coach);
-    }
-    
-    coachSelect.appendChild(option);
-});
+    // Добавляем все опции
+    coaches.forEach(coach => {
+        const option = document.createElement('option');
+        option.value = coach.id;
+        option.textContent = coach.name;
+        
+        // Указываем selected для нужного тренера
+        if (coach.name === group.coach_name) {
+            option.selected = true;
+            console.log("Установлен выбранный тренер:", coach);
+        }
+        
+        coachSelect.appendChild(option);
+    });
 
     // Если у группы есть тренер, устанавливаем его значение в селекте
     if (group.coach_id) {
         console.log("Group has coach_id:", group.coach_id, "- setting selection");
         coachSelect.value = group.coach_id.toString();
     }
+    
+    // Загружаем расписания для группы и отображаем их
+    loadGroupSchedules(group.id);
     
     closeGroupDetailsModal();
     groupModal.classList.add('active');
@@ -531,12 +608,16 @@ function saveGroup() {
         coach_name: coachName,
         status: status,
         description: description,
-        members_count: groupId ? (groups.find(g => g.id == groupId)?.members_count || 0) : 0
+        members_count: groupId ? (groups.find(g => g.id == groupId)?.members_count || 0) : 0,
+        schedules: schedules // Добавляем расписания к данным группы
     };
     
+
     if (window.ws && window.ws.readyState === WebSocket.OPEN) {
+        // Используем разные коды в зависимости от того, создается новая группа или редактируется существующая
+        const apiCode = groupId ? GROUP_API_CODES.UPDATE_GROUP : GROUP_API_CODES.CREATE_GROUP;
         window.ws.send(JSON.stringify({
-            code: GROUP_API_CODES.CREATE_GROUP,
+            code: apiCode,
             group: groupData
         }));
     } else {
@@ -545,39 +626,6 @@ function saveGroup() {
     
     closeGroupModal();
 }
-
-// // Открытие модального окна деталей группы
-// function openEditGroupModal() {
-//     const group = currentGroup;
-    
-//     if (!group) {
-//         console.error('Группа для редактирования не найдена');
-//         return;
-//     }
-    
-//     document.getElementById('groupModalTitle').textContent = `Редагування групи "${group.name}"`;
-//     document.getElementById('groupId').value = group.id;
-//     document.getElementById('groupName').value = group.name;
-//     document.getElementById('groupStatus').value = group.status ? '1' : '0';
-//     document.getElementById('groupDescription').value = group.description || '';
-    
-//     // Populate coach dropdown with available coaches
-//     const coachSelect = document.getElementById('groupCoach');
-//     coachSelect.innerHTML = '<option value="">Оберіть тренера</option>';
-    
-//     // Add all available coaches
-//     coaches.forEach(coach => {
-//         const option = document.createElement('option');
-//         option.value = coach.id;
-//         option.textContent = coach.name;
-//         coachSelect.appendChild(option);
-//     });
-    
-//     // Select the current coach if it exists
-//     if (group.coach_id) {
-//         coachSelect.value = group.coach_id.toString();
-//     }
-// }
 
 // Закрытие модального окна деталей группы
 function closeGroupDetailsModal() {
@@ -733,13 +781,12 @@ function closeAddLessonModal() {
 function addLessonToGroup() {
     const addLessonForm = document.getElementById('addLessonForm');
     
-    // if (!addLessonForm.checkValidity()) {
-    //     alert('Будь ласка, заповніть всі обов\'язкові поля');
-    //     return;
-    // }
+    if (!addLessonForm.checkValidity()) {
+        alert('Будь ласка, заповніть всі обов\'язкові поля');
+        return;
+    }
     
     const groupId = parseInt(document.getElementById('lessonGroupId').value);
-    // const title = document.getElementById('lessonTitle').value;
     const date = document.getElementById('lessonDate').value;
     const startTime = document.getElementById('lessonStartTime').value;
     const endTime = document.getElementById('lessonEndTime').value;
@@ -755,15 +802,145 @@ function addLessonToGroup() {
         is_cancelled: false
     };
     
-
+    if (window.ws && window.ws.readyState === WebSocket.OPEN) {
         window.ws.send(JSON.stringify({
             code: GROUP_API_CODES.ADD_GROUP_LESSON,
             group_id: groupId,
             lesson: lesson
         }));
-
+    } else {
+        simulateAddLesson(groupId, lesson);
+    }
     
     closeAddLessonModal();
+}
+
+// Открытие модального окна добавления расписания
+function openScheduleModal() {
+    document.getElementById('scheduleForm').reset();
+    
+    // Устанавливаем значения по умолчанию
+    const now = new Date();
+    document.getElementById('startTime').value = `${String(now.getHours()).padStart(2, '0')}:00`;
+    document.getElementById('endTime').value = `${String(now.getHours() + 1).padStart(2, '0')}:30`;
+    
+    scheduleModal.classList.add('active');
+}
+
+// Закрытие модального окна расписания
+function closeScheduleModal() {
+    scheduleModal.classList.remove('active');
+    document.getElementById('scheduleForm').reset();
+}
+// Добавление элемента расписания
+function addScheduleItem() {
+    const scheduleForm = document.getElementById('scheduleForm');
+    
+    if (!scheduleForm.checkValidity()) {
+        alert('Будь ласка, заповніть всі обов\'язкові поля');
+        return;
+    }
+    
+    const dayOfWeek = parseInt(document.getElementById('dayOfWeek').value);
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    
+    // Добавляем новый элемент расписания
+    const newSchedule = {
+        id: Date.now(), // Временный ID
+        day_of_the_week: dayOfWeek,
+        start_time: startTime,
+        end_time: endTime
+    };
+    
+    // Всегда добавляем в локальный массив
+    schedules.push(newSchedule);
+    
+    // Обновляем отображение
+    renderGroupSchedules(schedules);
+    
+    // Закрываем модальное окно сразу
+    closeScheduleModal();
+}
+// Удаление элемента расписания
+
+// Удаление элемента расписания
+function removeScheduleItem(scheduleId) {
+
+
+        schedules = schedules.filter(s => s.id !== scheduleId);
+        
+
+        renderGroupSchedules(schedules);
+
+}
+// Отображение расписаний группы
+function renderGroupSchedules(scheduleItems) {
+    const schedulesList = document.getElementById('schedulesList');
+    const detailsSchedulesList = document.getElementById('detailSchedulesList');
+    
+    // Функция для создания HTML-содержимого элемента расписания
+    const createScheduleItemHTML = (schedule, showRemoveButton = false) => {
+        const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
+        const dayName = dayNames[schedule.day_of_the_week];
+        
+        let html = `
+            <div class="schedule-info">
+                <div class="schedule-day">${dayName}</div>
+                <div class="schedule-time">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</div>
+            </div>
+        `;
+        
+        if (showRemoveButton) {
+            html += `
+                <div class="schedule-actions">
+                    <button type="button" class="remove-schedule" data-id="${schedule.id}">&times;</button>
+                </div>
+            `;
+        }
+        
+        return html;
+    };
+    
+    // Отображение в форме редактирования/создания группы
+    if (schedulesList) {
+        schedulesList.innerHTML = '';
+        
+        if (scheduleItems.length === 0) {
+            schedulesList.innerHTML = '<p>Розклад не додано</p>';
+        } else {
+            scheduleItems.forEach(schedule => {
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'schedule-item';
+                scheduleItem.innerHTML = createScheduleItemHTML(schedule, true);
+                schedulesList.appendChild(scheduleItem);
+            });
+            
+            // Добавляем обработчики для кнопок удаления
+            document.querySelectorAll('.remove-schedule').forEach(button => {
+                button.addEventListener('click', function() {
+                    const scheduleId = parseInt(this.dataset.id);
+                    removeScheduleItem(scheduleId);
+                });
+            });
+        }
+    }
+    
+    // Отображение в панели деталей группы
+    if (detailsSchedulesList) {
+        detailsSchedulesList.innerHTML = '';
+        
+        if (scheduleItems.length === 0) {
+            detailsSchedulesList.innerHTML = '<p>Розклад не додано</p>';
+        } else {
+            scheduleItems.forEach(schedule => {
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'schedule-item';
+                scheduleItem.innerHTML = createScheduleItemHTML(schedule, false);
+                detailsSchedulesList.appendChild(scheduleItem);
+            });
+        }
+    }
 }
 
 // Отображение занятий группы
@@ -827,7 +1004,7 @@ function renderGroupLessons(lessons, filter = 'all') {
         
         lessonCard.innerHTML = `
             <div class="lesson-header">
-                <div class="lesson-title">${lesson.title}</div>
+                <div class="lesson-title">${lesson.title || 'Заняття групи'}</div>
                 <div class="lesson-status ${statusClass}">${statusText}</div>
             </div>
             <div class="lesson-details">
@@ -897,12 +1074,11 @@ function viewLessonDetails(lessonId) {
     
     if (!lesson) {
         console.error('Занятие с ID ' + lessonId + ' не найдено');
-        console.log(`tаа${lessons}`)
         return;
     }
     
     alert(`
-        Заняття: ${lesson.title}
+        Заняття: ${lesson.title || 'Заняття групи'}
         Дата: ${formatDate(lesson.date)}
         Час: ${formatTime(lesson.start_time)} - ${formatTime(lesson.end_time)}
         Тренер: ${lesson.coach_name}
@@ -918,7 +1094,10 @@ function formatDate(dateString) {
 }
 
 function formatTime(timeString) {
-    return timeString.substring(0, 5);
+    if (typeof timeString === 'string' && timeString.includes(':')) {
+        return timeString.substring(0, 5);
+    }
+    return timeString;
 }
 
 function generateLessonId() {
@@ -997,26 +1176,135 @@ function simulateRemoveMember(groupId, clientId) {
 }
 
 function simulateAddLesson(groupId, lesson) {
+    if (!MOCK_GROUP_LESSONS) {
+        MOCK_GROUP_LESSONS = {};
+    }
+    
     if (!MOCK_GROUP_LESSONS[groupId]) {
         MOCK_GROUP_LESSONS[groupId] = [];
     }
     
     MOCK_GROUP_LESSONS[groupId].push(lesson);
     
-    const activeFilter = document.querySelector('input[name="lessons-filter"]:checked').value;
-    renderGroupLessons(lessons, activeFilter);
+    if (currentGroup && currentGroup.id === groupId) {
+        lessons = MOCK_GROUP_LESSONS[groupId];
+        const activeFilter = document.querySelector('input[name="lessons-filter"]:checked').value;
+        renderGroupLessons(lessons, activeFilter);
+    }
 }
 
 function simulateCancelLesson(lessonId) {
     if (!currentGroup) return;
     
-    const lessons = MOCK_GROUP_LESSONS[currentGroup.id] || [];
-    const index = lessons.findIndex(l => l.id === lessonId);
+    if (!MOCK_GROUP_LESSONS) {
+        return;
+    }
+    
+    const groupLessons = MOCK_GROUP_LESSONS[currentGroup.id] || [];
+    const index = groupLessons.findIndex(l => l.id === lessonId);
     
     if (index !== -1) {
-        lessons[index].is_cancelled = true;
+        groupLessons[index].is_cancelled = true;
         
-        const activeFilter = document.querySelector('input[name="lessons-filter"]:checked').value;
-        renderGroupLessons(lessons, activeFilter);
+        if (currentGroup) {
+            lessons = groupLessons;
+            const activeFilter = document.querySelector('input[name="lessons-filter"]:checked').value;
+            renderGroupLessons(lessons, activeFilter);
+        }
     }
 }
+
+// Определение мок-данных (для работы без API)
+const MOCK_GROUPS = [
+    {
+        id: 1,
+        name: "Початківці",
+        coach_id: 1,
+        coach_name: "Олена Петренко",
+        status: true,
+        members_count: 5,
+        description: "Група для початківців, які тільки розпочинають займатися пілатесом."
+    },
+    {
+        id: 2,
+        name: "Середній рівень",
+        coach_id: 2,
+        coach_name: "Іван Сидоренко",
+        status: true,
+        members_count: 8,
+        description: "Група для тих, хто вже має базові навички і хоче їх розвивати."
+    },
+    {
+        id: 3,
+        name: "Просунутий рівень",
+        coach_id: 3,
+        coach_name: "Анна Ковальчук",
+        status: false,
+        members_count: 3,
+        description: "Група для досвідчених клієнтів з глибоким розумінням техніки пілатесу."
+    }
+];
+
+const MOCK_COACHES = [
+    { id: 1, name: "Олена Петренко" },
+    { id: 2, name: "Іван Сидоренко" },
+    { id: 3, name: "Анна Ковальчук" }
+];
+
+const MOCK_AVAILABLE_CLIENTS = [
+    { id: 1, name: "Марія Коваленко" },
+    { id: 2, name: "Олександр Мельник" },
+    { id: 3, name: "Наталія Шевченко" },
+    { id: 4, name: "Петро Бондаренко" },
+    { id: 5, name: "Ірина Лисенко" }
+];
+
+// Мок-данные для расписаний групп
+const MOCK_GROUP_SCHEDULES = {
+    1: [
+        { id: 1, day_of_the_week: 1, start_time: "18:00:00", end_time: "19:30:00" },
+        { id: 2, day_of_the_week: 3, start_time: "18:00:00", end_time: "19:30:00" }
+    ],
+    2: [
+        { id: 3, day_of_the_week: 2, start_time: "17:00:00", end_time: "18:30:00" },
+        { id: 4, day_of_the_week: 4, start_time: "17:00:00", end_time: "18:30:00" }
+    ],
+    3: [
+        { id: 5, day_of_the_week: 0, start_time: "19:00:00", end_time: "20:30:00" },
+        { id: 6, day_of_the_week: 5, start_time: "10:00:00", end_time: "11:30:00" }
+    ]
+};
+
+let MOCK_GROUP_LESSONS = {
+    1: [
+        {
+            id: 1,
+            date: "2025-05-15",
+            start_time: "18:00:00",
+            end_time: "19:30:00",
+            price: 200,
+            coach_name: "Олена Петренко",
+            is_cancelled: false
+        },
+        {
+            id: 2,
+            date: "2025-05-17",
+            start_time: "18:00:00",
+            end_time: "19:30:00",
+            price: 200,
+            coach_name: "Олена Петренко",
+            is_cancelled: false
+        }
+    ],
+    2: [
+        {
+            id: 3,
+            date: "2025-05-16",
+            start_time: "17:00:00",
+            end_time: "18:30:00",
+            price: 250,
+            coach_name: "Іван Сидоренко",
+            is_cancelled: false
+        }
+    ]
+};

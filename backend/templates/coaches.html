@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тренера</title>
-    <link rel="stylesheet" href="../css/coaches.css">
-    <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="{{ url_for('static',path = '/css/coaches.css')}}">
+<link rel="stylesheet" href="{{ url_for('static',path = '/css/coach-modal.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -44,126 +47,283 @@
 
     <div class="container">
         <h1>Тренери</h1>
-        
+            <!-- Add this button right after the h1 heading in coaches.html -->
+<div class="add-trainer-container">
+    <button id="addTrainerBtn" class="add-trainer-button">
+        <span class="plus-icon">+</span> Додати тренера
+    </button>
+</div>
         <div class="trainers-grid">
             <!-- Карточка тренера 1 -->
-            <div class="trainer-card">
+             {%for card in cards%}
+            <div class="trainer-card" data-id="{{card.id}}" >
                 <div class="arch-decoration"></div>
                 <div class="trainer-photo">
-                    <img src="../images/female1.png" alt="Александра Иванова">
+                    <img src="/media/coaches/{{card.image}}" alt="{{card.name}}">
                     <div class="trainer-status status-active">Активний</div>
                 </div>
                 <div class="trainer-info">
-                    <div class="trainer-name">Александра Иванова</div>
-                    <div class="trainer-title">Старший тренер з пілатесу</div>
+                    <div class="trainer-name">{{card.name}}</div>
+                    <div class="trainer-title">{{card.position}}</div>
                     <div class="trainer-bio">
-                        Сертифікований тренер з пілатесу з 5-річним досвідом. Спеціалізується на реабілітаційному пілатесі та роботі з початківцями.
+                       {{card.description}}
                     </div>
                     <div class="trainer-availability">
                         <span class="availability-indicator available"></span>
-                        Доступний сьогодні
+                        {{card.status}}
                     </div>
-                    <div class="trainer-stats">
+                    <!-- <div class="trainer-stats">
                         <div class="stat-item">
-                            <div class="stat-value">58</div>
+                            <div class="stat-value">{{card.clients_amount}}</div>
                             <div class="stat-label">Клієнтів</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">12</div>
+                            <div class="stat-value">{{card.groups_amount}}</div>
                             <div class="stat-label">Груп</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">97%</div>
+                            <div class="stat-value">{{card.rate}}</div>
                             <div class="stat-label">Рейтинг</div>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="trainer-actions">
                         <button class="action-button">Розклад</button>
                         <button class="action-button">Редагувати</button>
                     </div>
                 </div>
             </div>
+            {%endfor%}
             
-            <!-- Карточка тренера 2 -->
-            <div class="trainer-card">
-                <div class="arch-decoration"></div>
-                <div class="trainer-photo">
-                    <img src="../images/male.png" alt="Дмитрий Петров">
-                    <div class="trainer-status status-vacation">Відпустка</div>
-                </div>
-                <div class="trainer-info">
-                    <div class="trainer-name">Дмитрий Петров</div>
-                    <div class="trainer-title">Тренер з пілатесу</div>
-                    <div class="trainer-bio">
-                        Майстер спорту з гімнастики. Викладає матовий та обладнання пілатесу. Має додаткову спеціалізацію з TRX.
-                    </div>
-                    <div class="trainer-availability">
-                        <span class="availability-indicator unavailable"></span>
-                        Повернеться 20 квітня
-                    </div>
-                    <div class="trainer-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">42</div>
-                            <div class="stat-label">Клієнтів</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">8</div>
-                            <div class="stat-label">Груп</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">94%</div>
-                            <div class="stat-label">Рейтинг</div>
-                        </div>
-                    </div>
-                    <div class="trainer-actions">
-                        <button class="action-button">Розклад</button>
-                        <button class="action-button">Редагувати</button>
-                    </div>
-                </div>
+
+        </div>
+    </div>
+
+    </main><!-- Модальное окно с информацией о тренере -->
+    <div id="trainerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            
+            <div class="modal-header">
+                <h2 id="modalTrainerName"></h2>
+                <p id="modalTrainerPosition"></p>
+                <!-- <div class="trainer-status" id="modalTrainerStatus"></div> -->
             </div>
             
-            <!-- Карточка тренера 3 -->
-            <div class="trainer-card">
-                <div class="arch-decoration"></div>
-                <div class="trainer-photo">
-                    <img src="../images/female2.png" alt="Мария Сидорова">
-                    <div class="trainer-status status-active">Активний</div>
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="details">Інформація</button>
+                    <button class="tab-button" data-tab="schedule">Розклад</button>
+                    <button class="tab-button" data-tab="statistics">Статистика</button>
+                    <button class="tab-button" style="display: none;" data-tab="comments">Відгуки</button>
+                    <button class="tab-button" data-tab="edit">Редагувати</button>
                 </div>
-                <div class="trainer-info">
-                    <div class="trainer-name">Мария Сидорова</div>
-                    <div class="trainer-title">Тренер з йоги та пілатесу</div>
-                    <div class="trainer-bio">
-                        Практик з 10-річним досвідом. Проводить групові та індивідуальні заняття, спеціалізується на пренатальному пілатесі.
-                    </div>
-                    <div class="trainer-availability">
-                        <span class="availability-indicator limited"></span>
-                        Обмежена доступність
-                    </div>
-                    <div class="trainer-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">63</div>
-                            <div class="stat-label">Клієнтів</div>
+                
+                <!-- Вкладка с информацией -->
+                <div class="tab-content active" id="detailsTab">
+                    <div class="trainer-detail-content">
+                        <div class="modal-trainer-photo">
+                            <img id="modalTrainerPhoto" src="" alt="Фото тренера">
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value">15</div>
-                            <div class="stat-label">Груп</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">99%</div>
-                            <div class="stat-label">Рейтинг</div>
+                        <div class="modal-trainer-details">
+                            <h3>Інформація про тренера</h3>
+                            <p id="modalTrainerBio"></p>
+                            
+                            <!-- <div class="trainer-detail-item">
+                                <span class="detail-label">Спеціалізація</span>
+                                <span id="trainerSpecialization"></span>
+                            </div>
+                            
+                            <div class="trainer-detail-item">
+                                <span class="detail-label">Досвід</span>
+                                <span id="trainerExperience"></span>
+                            </div>
+                            
+                            <div class="trainer-detail-item">
+                                <span class="detail-label">Сертифікати</span>
+                                <div id="trainerCertificates"></div>
+                            </div> -->
                         </div>
                     </div>
-                    <div class="trainer-actions">
-                        <button class="action-button">Розклад</button>
-                        <button class="action-button">Редагувати</button>
+                </div>
+                <!-- Вкладка с расписанием -->
+                <div class="tab-content" id="scheduleTab">
+                    <h3>Розклад тренера</h3>
+                    <div id="trainerSchedule" class="schedule-container">
+                        <p>Завантаження розкладу...</p>
                     </div>
+                </div>
+                
+                <!-- Вкладка со статистикой -->
+                <div class="tab-content" id="statisticsTab">
+                    <h3>Статистика тренера</h3>
+                    <div class="statistics-container">
+                        <div class="stat-cards">
+                            <div class="stat-card">
+                                <div class="stat-value" id="statClientsTotal">0</div>
+                                <div class="stat-label">Всього клієнтів</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statSessionsMonth">0</div>
+                                <div class="stat-label">Занять за місяць</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statRating">0.0</div>
+                                <div class="stat-label">Середня оцінка</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statActiveGroups">0</div>
+                                <div class="stat-label">Активних груп</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h4>Кількість занять за останні 6 місяців</h4>
+                            <canvas id="sessionsChart"></canvas>
+                        </div>
+                        
+                        <!-- <div class="chart-container">
+                            <h4>Розподіл типів занять</h4>
+                            <canvas id="sessionsTypeChart"></canvas>
+                        </div> -->
+                    </div>
+                </div>
+                
+                <!-- Вкладка с комментариями -->
+                <div class="tab-content" id="commentsTab">
+                    <h3>Відгуки про тренера</h3>
+                    <div class="rating-summary">
+                        <div class="avg-rating" id="avgRating">4.8</div>
+                        <div class="rating-stars" id="ratingStars">★★★★★</div>
+                        <div class="total-reviews" id="totalReviews">Всього відгуків: 24</div>
+                    </div>
+                    
+                    <div class="comments-container" id="commentsContainer">
+                        <p>Завантаження відгуків...</p>
+                    </div>
+                    
+                    <div class="load-more-comments">
+                        <button id="loadMoreComments" class="action-button">Завантажити ще</button>
+                    </div>
+                </div>
+                
+                <!-- Вкладка с редактированием -->
+                <div class="tab-content" id="editTab">
+                    <h3>Редагування інформації про тренера</h3>
+                    <form id="editTrainerForm" class="edit-form">
+                        <div class="form-group">
+                            <label for="editName">Ім'я:</label>
+                            <input type="text" id="editName" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPosition">Посада:</label>
+                            <input type="text" id="editPosition" name="position" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editDescription">Опис:</label>
+                            <textarea id="editDescription" name="description" rows="4" required></textarea>
+                        </div>
+                        
+                        <!-- <div class="form-group">
+                            <label for="editSpecialization">Спеціалізація:</label>
+                            <input type="text" id="editSpecialization" name="specialization">
+                        </div>
+                         -->
+                        <!-- <div class="form-group">
+                            <label for="editExperience">Досвід:</label>
+                            <input type="text" id="editExperience" name="experience">
+                        </div> -->
+                        
+                        <div class="form-group">
+                            <label for="editStatus">Статус:</label>
+                            <select id="editStatus" name="status">
+                                <option value="active">Активний</option>
+                                <option value="vacation">Відпустка</option>
+                                <option value="sick">Хворіє</option>
+                                <option value="inactive">Неактивний</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editPhoto">Нове фото:</label>
+                            <input type="file" id="editPhoto" name="photo" accept="image/*">
+                            <div class="photo-preview" id="photoPreview"></div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" id="cancelEdit" class="action-button cancel">Скасувати</button>
+                            <button type="submit" class="action-button save">Зберегти</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    </main>
-    <script src="../js/menu.js"></script>
+
+
+<!-- Add this modal at the end of the body tag, next to the existing modal -->
+<div id="addTrainerModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        
+        <div class="modal-header">
+            <h2>Додати нового тренера</h2>
+        </div>
+        
+        <form id="addTrainerForm" class="edit-form">
+            <div class="form-group">
+                <label for="newName">Ім'я:</label>
+                <input type="text" id="newName" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="newPosition">Посада:</label>
+                <input type="text" id="newPosition" name="position" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="newDescription">Опис:</label>
+                <textarea id="newDescription" name="description" rows="4" required></textarea>
+            </div>
+            
+            <!-- <div class="form-group">
+                <label for="newSpecialization">Спеціалізація:</label>
+                <input type="text" id="newSpecialization" name="specialization">
+            </div>
+            
+            <div class="form-group">
+                <label for="newExperience">Досвід:</label>
+                <input type="text" id="newExperience" name="experience">
+            </div> -->
+            
+            <div class="form-group">
+                <label for="newStatus">Статус:</label>
+                <select id="newStatus" name="status">
+                    <option value="active">Активний</option>
+                    <option value="vacation">Відпустка</option>
+                    <option value="sick">Хворіє</option>
+                    <option value="inactive">Неактивний</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="newPhoto">Фото:</label>
+                <input type="file" id="newPhoto" name="photo" accept="image/*">
+                <div class="photo-preview" id="newPhotoPreview"></div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="cancelAddTrainer" class="action-button cancel">Скасувати</button>
+                <button type="submit" class="action-button save">Зберегти</button>
+            </div>
+        </form>
+    </div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
+    <script src="{{ url_for('static',path = '/js/coach-modal.js')}}"></script>
 
 </body>
 </html>

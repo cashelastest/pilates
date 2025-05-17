@@ -103,3 +103,77 @@ def generate_dates(info, count):
         current_date += timedelta(days=1)
     
     return result
+
+def custom_translit(text):
+    char_map = {
+        # Общие для украинского и русского
+        'а': 'a', 'б': 'b', 'в': 'v', 'д': 'd', 'е': 'e',
+        'ж': 'zh', 'з': 'z', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+        'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+        'ь': '', 'ъ': '', 'э': 'e',
+        
+        # Специфичные для украинского
+        'ґ': 'g', 'є': 'ie', 'і': 'i', 'ї': 'yi', 'и': 'y',
+        
+        # Специфичные для русского
+        'г': 'g', 'и': 'i', 'й': 'y', 'ы': 'y', 'ю': 'yu', 'я': 'ya',
+        
+        # Украинские варианты
+        'г': 'h',  # В украинском 'г' = 'h'
+        'и': 'y',  # В украинском 'и' = 'y'
+        'й': 'i',  # В украинском 'й' = 'i'
+        'ю': 'iu', # В украинском 'ю' = 'iu'
+        'я': 'ia'  # В украинском 'я' = 'ia'
+    }
+    
+    # Определяем, больше ли в тексте украинских специфичных символов
+    ua_specific = sum(1 for char in text.lower() if char in 'єіїґ')
+    ru_specific = sum(1 for char in text.lower() if char in 'ыэъ')
+    
+    # Выбираем режим транслитерации на основе наличия специфичных символов
+    is_ua = ua_specific > ru_specific
+    
+    # Для решения конфликтов между украинской и русской транслитерацией
+    if is_ua:
+        char_map.update({
+            'г': 'h',
+            'и': 'y',
+            'й': 'i',
+            'ю': 'iu',
+            'я': 'ia'
+        })
+    else:
+        char_map.update({
+            'г': 'g',
+            'и': 'i',
+            'й': 'y',
+            'ю': 'yu',
+            'я': 'ya'
+        })
+    
+    result = ""
+    for char in text:
+        lower_char = char.lower()
+        if lower_char in char_map:
+            # Сохраняем регистр
+            if char.isupper():
+                result += char_map[lower_char].capitalize()
+            else:
+                result += char_map[lower_char]
+        else:
+            result += char
+    
+    return result
+def sort_by_monthes(lessons:list[Lesson]):
+    months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
+    sorted_lessons = []
+    print(lessons[0].date.month)
+    for month_number, month in enumerate(months):
+        session_history = {
+            "month":month,
+            "count":len([lesson for lesson in lessons if lesson.date.month == month_number+1 and lesson.date.year == datetime.now().year])
+        }
+        sorted_lessons.append(session_history)
+    print(sorted_lessons)
+    return sorted_lessons

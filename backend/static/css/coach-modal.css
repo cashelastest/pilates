@@ -1,0 +1,872 @@
+/* Подзаголовок "Інформація про тренера" */
+.info-section-subtitle {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: normal;
+    color: var(--almost-black, #333333);
+    position: relative;
+    border-bottom: 1px solid rgba(213, 199, 184, 0.4);
+    padding-bottom: 10px;
+}
+
+.info-section-subtitle::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50px;
+    height: 1px;
+    background-color: var(--coral, #E09380);
+}/* Улучшенные стили для модального окна тренера */
+
+/* Основное модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--warm-white, #FDFBF8);
+    margin: 5% auto;
+    padding: 25px 25px 40px 25px;
+    border-radius: 16px;
+    width: 85%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    position: relative;
+    transform: translateY(20px);
+    animation: slideUp 0.4s ease forwards;
+    border-top: 5px solid var(--coral, #E09380);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0.8; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Заголовок и кнопка закрытия */
+.close-modal {
+    position: absolute !important; /* Переопределяем position: static */
+    top: 15px !important;
+    right: 15px !important;
+    color: #A0A0A0;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 9999 !important; /* Высокий z-index для уверенности */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.close-modal:hover {
+    color: var(--coral, #E09380);
+    background-color: rgba(224, 147, 128, 0.1);
+    transform: rotate(90deg);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--light-wood, #D5C7B8);
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(to right, var(--coral, #E09380), var(--peach, #FFCDB8));
+    border-radius: 3px;
+}
+
+.modal-header h2 {
+    margin: 0 0 8px 0;
+    color: var(--almost-black, #333333);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.modal-header p {
+    margin: 0;
+    color: var(--dark-gray, #555555);
+    font-size: 16px;
+}
+
+/* Статус тренера */
+.trainer-status {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-left: 12px;
+    font-weight: normal;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.status-active,
+.status-активний {
+    background-color: #efe6d9;
+    color: var(--dark-gray, #555555);
+    border-left: 3px solid var(--peach, #FFCDB8);
+}
+
+.status-vacation, 
+.status-відпустка {
+    background-color: #efe6d9;
+    color: var(--dark-gray, #555555);
+    border-left: 3px solid var(--coral, #E09380);
+}
+
+.status-sick,
+.status-хворіє {
+    background-color: var(--soft-pink, #FBEAE2);
+    color: var(--dark-gray, #555555);
+    border-left: 3px solid #d8a093;
+}
+
+.status-inactive,
+.status-неактивний {
+    background-color: var(--cancelled, #E2DCDA);
+    color: var(--dark-gray, #555555);
+    border-left: 3px solid #b5aeab;
+}
+
+/* Вкладки */
+.tabs-container {
+    margin-top: 20px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--light-wood, #D5C7B8);
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.tab-button {
+    padding: 12px 22px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: normal;
+    color: var(--dark-gray, #555555);
+    transition: all 0.3s;
+    font-size: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-button::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: var(--coral, #E09380);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.tab-button:hover {
+    color: var(--coral, #E09380);
+}
+
+.tab-button:hover::before {
+    width: 40%;
+}
+
+.tab-button.active {
+    color: var(--coral, #E09380);
+    font-weight: 500;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--coral, #E09380);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeContent 0.5s ease;
+}
+
+@keyframes fadeContent {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Информация о тренере */
+.trainer-detail-content {
+    display: flex;
+    gap: 30px;
+    margin-top: 0;
+}
+
+.modal-trainer-photo {
+    flex: 0 0 250px;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-trainer-photo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 70%, rgba(255,255,255,0.1) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.modal-trainer-photo img {
+    width: 100%;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.modal-trainer-photo:hover img {
+    transform: scale(1.03);
+}
+
+.modal-trainer-details {
+    flex: 1;
+}
+
+/* Заголовок вкладки "Інформація про тренера" */
+#detailsTab h3, .info-section-title {
+    font-size: 20px;
+    font-weight: normal;
+    color: var(--dark-gray, #555555);
+    margin-top: 0;
+    margin-bottom: 20px;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 8px;
+}
+
+#detailsTab h3::after, .info-section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--coral, #E09380);
+}
+
+.modal-trainer-details p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--dark-gray, #555555);
+    margin-bottom: 22px;
+}
+
+/* Новая структура для отображения деталей *//* Общий контейнер для деталей */
+.trainer-detail-content {
+    display: flex;
+    gap: 30px;
+    margin-top: 0;
+}
+
+/* Фото тренера */
+.modal-trainer-photo {
+    flex: 0 0 250px;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-trainer-photo img {
+    width: 100%;
+    display: block;
+    transition: transform 0.5s ease;
+    object-fit: cover;
+}
+
+.modal-trainer-photo:hover img {
+    transform: scale(1.03);
+}
+
+/* Блок с информацией */
+.modal-trainer-details {
+    flex: 1;
+}
+
+.modal-trainer-details h3 {
+    font-size: 22px;
+    font-weight: normal;
+    color: var(--dark-gray, #555555);
+    margin-top: 0;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(213, 199, 184, 0.4);
+    position: relative;
+}
+
+.modal-trainer-details h3::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background-color: var(--coral, #E09380);
+}
+
+.modal-trainer-details p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--dark-gray, #555555);
+    margin-bottom: 25px;
+}
+
+/* Элементы с метками и значениями */
+.trainer-detail-item {
+    margin: 14px 0;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+}
+
+.detail-label {
+    font-weight: normal;
+    color: var(--dark-gray, #555555);
+    position: relative;
+    padding-right: 5px;
+    min-width: 130px;
+}
+
+/* Переопределяем стиль для двоеточия, чтобы оно было в самой метке, а не добавлялось через CSS */
+.detail-label::after {
+    content: '';
+}
+
+/* Стили для сертификатов */
+#trainerCertificates ul {
+    padding-left: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    list-style-type: none;
+}
+
+#trainerCertificates li {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 22px;
+    color: var(--dark-gray, #555555);
+}
+
+#trainerCertificates li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--coral, #E09380);
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* Убираем маркеры из JavaScript-генерированного списка */
+#trainerCertificates ul li::marker {
+    display: none;
+    content: '';
+}
+
+
+/* Расписание */
+.schedule-container {
+    /* background-color: rgba(215, 228, 217, 0.3); */
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+#scheduleTab h3, .schedule-title {
+    color: var(--dark-gray, #555555);
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 18px;
+    margin-top: 0;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 8px;
+}
+
+#scheduleTab h3::after, .schedule-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background-color: var(--coral, #E09380);
+}
+
+.schedule-container table {
+    width: 100%;
+    border-collapse: separate;
+}
+
+.schedule-container th {
+    text-align: left;
+    padding: 14px 20px;
+    color: var(--light-gray, #A0A0A0);
+    font-weight: normal;
+    font-size: 14px;
+    background-color: rgba(215, 228, 217, 0.5);
+    border-bottom: 1px solid rgba(215, 228, 217, 0.7);
+}
+
+.schedule-container td {
+    padding: 14px 20px;
+    background-color: rgba(215, 228, 217, 0.3);
+    color: var(--dark-gray, #555555);
+    font-size: 14px;
+    border-bottom: 1px solid rgba(215, 228, 217, 0.3);
+    transition: background-color 0.2s ease;
+}
+
+.schedule-container tr:hover td {
+    background-color: rgba(215, 228, 217, 0.5);
+}
+
+#scheduleTab table, 
+.schedule-container table {
+    width: 100%;
+    border-spacing: 2px;
+    border-collapse: separate;
+}
+
+/* Статистика */
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 35px;
+}
+
+.stat-card {
+    background-color: var(--cream, #EFE8DF);
+    border-radius: 12px;
+    padding: 22px 18px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--coral, #E09380);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--coral, #E09380);
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: var(--dark-gray, #555555);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.chart-container {
+    margin: 35px 0;
+    background-color: var(--warm-white, #FDFBF8);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    border-left: 4px solid var(--peach, #FFCDB8);
+}
+
+.chart-container h4 {
+    margin-top: 0;
+    color: var(--almost-black, #333333);
+    font-size: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(213, 199, 184, 0.3);
+    position: relative;
+}
+
+.chart-container h4::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background-color: var(--peach, #FFCDB8);
+}
+
+/* Комментарии */
+.rating-summary {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    background-color: var(--cream, #EFE8DF);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.rating-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--coral, #E09380), var(--peach, #FFCDB8));
+}
+
+.avg-rating {
+    font-size: 42px;
+    font-weight: bold;
+    color: var(--coral, #E09380);
+    margin-right: 25px;
+    line-height: 1;
+}
+
+.rating-stars {
+    color: #FFD700;
+    font-size: 26px;
+    margin-right: 25px;
+    letter-spacing: 2px;
+}
+
+.total-reviews {
+    color: var(--dark-gray, #555555);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.comments-container {
+    margin-bottom: 25px;
+}
+
+.comment-item {
+    border-bottom: 1px solid var(--light-wood, #D5C7B8);
+    padding: 20px 0;
+    transition: all 0.2s ease;
+}
+
+.comment-item:hover {
+    background-color: rgba(239, 230, 217, 0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: var(--almost-black, #333333);
+}
+
+.comment-date {
+    color: var(--light-gray, #A0A0A0);
+    font-size: 0.9em;
+}
+
+.comment-rating {
+    color: #FFD700;
+    margin: 8px 0;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+.comment-text {
+    line-height: 1.6;
+    color: var(--dark-gray, #555555);
+}
+
+.load-more-comments {
+    text-align: center;
+    margin-top: 25px;
+}
+
+/* Кнопки действий */
+.action-button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.3s;
+    background-color: var(--peach, #FFCDB8);
+    color: var(--dark-gray, #555555);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.action-button:hover {
+    background-color: var(--terracotta, #E6B5A2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.action-button.cancel {
+    background-color: var(--cancelled, #E2DCDA);
+    color: var(--dark-gray, #555555);
+}
+
+.action-button.cancel:hover {
+    background-color: #d6cfcc;
+}
+
+.action-button.save {
+    background-color: var(--peach, #FFCDB8);
+    color: var(--dark-gray, #555555);
+}
+
+.action-button.save:hover {
+    background-color: var(--terracotta, #E6B5A2);
+}
+
+/* Форма редактирования */
+.edit-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: var(--almost-black, #333333);
+    position: relative;
+    padding-left: 18px;
+}
+
+.form-group label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--peach, #FFCDB8);
+    border-radius: 50%;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--light-wood, #D5C7B8);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    transition: all 0.3s;
+    background-color: var(--warm-white, #FDFBF8);
+}
+
+.form-group input[type="text"]:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--terracotta, #E6B5A2);
+    box-shadow: 0 0 0 3px rgba(230, 181, 162, 0.2);
+    outline: none;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-group input[type="file"] {
+    padding: 10px 0;
+}
+
+.photo-preview {
+    margin-top: 15px;
+    max-width: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.photo-preview:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.photo-preview img {
+    max-width: 100%;
+    display: block;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 35px;
+}
+
+/* Адаптивные стили */
+@media screen and (max-width: 768px) {
+    .trainer-detail-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .modal-trainer-photo {
+        flex: 0 0 auto;
+        max-width: 100%;
+    }
+    
+    .stat-cards {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+    }
+    
+    .tab-button {
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .action-button {
+        width: 100%;
+    }
+}
+/* Add Trainer Button Styles */
+.add-trainer-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.add-trainer-button {
+    background-color: var(--coral, #E09380);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s;
+    box-shadow: 0 3px 8px rgba(224, 147, 128, 0.3);
+}
+
+.add-trainer-button:hover {
+    background-color: #d8836f;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(224, 147, 128, 0.4);
+}
+
+.add-trainer-button .plus-icon {
+    font-size: 20px;
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+/* Modal adjustments for Add Trainer */
+#addTrainerModal .modal-header {
+    text-align: center;
+}
+
+#addTrainerModal .modal-header h2 {
+    display: inline-block;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+#addTrainerModal .modal-header::after {
+    width: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Photo preview for new trainer */
+#newPhotoPreview {
+    margin-top: 15px;
+    max-width: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#newPhotoPreview img {
+    width: 100%;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .add-trainer-container {
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+}

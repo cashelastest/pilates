@@ -118,7 +118,12 @@ function initializeAssignSubscriptionHandlers() {
     if (assignSubscriptionBtn) {
         assignSubscriptionBtn.addEventListener('click', openAssignSubscriptionModal);
     }
-    
+    // const addBalance = document.getElementById("addBalance");
+    // if (addBalance){
+    //     addBalance.addEventListener("click", ()=>{
+    //         sendMessage(code = 408, {"username":new URLSearchParams(window.location.search).get('username')})
+    //     })
+    // }
     // Дублирование кнопки добавления абонемента
     const addSubscriptionBtn = document.getElementById('addSubscriptionBtn');
     if (addSubscriptionBtn) {

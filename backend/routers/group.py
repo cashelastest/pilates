@@ -4,13 +4,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.websockets import WebSocket
 from fastapi.templating import Jinja2Templates
 from routers.client import Manager
-from models import Group, Client, ClientGroupAssociation, Coach, Lesson
+from models import Group, Client, ClientGroupAssociation, Coach, Lesson, SubscriptionSchedule
 from datetime import datetime
 
 
 templates = Jinja2Templates(directory='templates')
 group_router = APIRouter(prefix='/group', tags=['group'])
-
 
 class GroupManager(Manager):
 
@@ -18,7 +17,7 @@ class GroupManager(Manager):
     async def get_group_and_coach(self, ws: WebSocket) -> bool|None:
         groups = self.session.query(Group).all()
         data = []
-        print(groups)
+        
         for group in groups:
             group_info = {
                 'id':group.id,
@@ -35,6 +34,7 @@ class GroupManager(Manager):
                 ]
             }
             data.append(group_info)
+        print(group_info)
         await ws.send_json({"code":310, "data":data})
         return True
     
@@ -116,6 +116,23 @@ class GroupManager(Manager):
         group.coach_id = group_info.get('coach_id')
         group.status = group_info.get("status")
         group.description = group_info.get("description")
+        schedules=group_info.get("schedules")
+        new_schedules = []
+        for schedule_info in schedules:
+            if schedule_info.get("id") in [schedule.id for schedule in group.schedules]:
+                schedule = self.session.get(SubscriptionSchedule, schedule_info.get('id'))
+                schedule.day_of_the_week = schedule_info.get('day_of_the_week')
+                schedule.start_time = schedule_info.get("start_time")
+                schedule.end_time = schedule_info.get("end_time")
+                continue
+            new_schedule = SubscriptionSchedule(
+                day_of_the_week = schedule_info.get("day_of_the_week"),
+                start_time = schedule_info.get("start_time"),
+                end_time = schedule_info.get("end_time"),
+                group_id = group_info.get("id")
+            )
+            new_schedules.append(new_schedule)
+        self.session.add_all(new_schedules)                
         self.session.commit()
         return True
     
@@ -168,11 +185,41 @@ class GroupManager(Manager):
             name = data.get("name"),
             coach_id = data.get("coach_id"),
             status = data.get("status"),
-            description = data.get("description")
+            description = data.get("description"),
         )
         self.session.add(group)
+        self.session.flush()
+        schedules = [SubscriptionSchedule(
+            day_of_the_week = schedule.get("day_of_the_week"),
+            start_time = schedule.get("start_time"),
+            end_time = schedule.get("end_time"),
+            group_id = group.id
+        ) for schedule in data.get("schedules")]
+        self.session.add_all(schedules)
         self.session.commit()
 
+
+
+
+
+
+    async def get_group_schedules(self, group_id:int, ws:WebSocket):
+        group = self.session.get(Group, group_id)
+        if not group:
+            raise HTTPException(status_code=404, detail="No such group")
+        schedules=[
+                 {
+                     "id":schedule.id,
+                     "day_of_the_week":schedule.day_of_the_week,
+                     "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                     "end_time": schedule.end_time.strftime("%H:%M:%S"),
+
+                 } for schedule in group.schedules
+             ]
+        await ws.send_json({"code":317, "data":schedules})
+    
+
+    
 
 @group_router.get("/")
 def get_groups(request:Request):

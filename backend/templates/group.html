@@ -6,6 +6,8 @@
     <title>Групи - Pilates Studio</title>
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
     <link rel="stylesheet" href="{{ url_for('static',path = '/css/groups.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/subscriptions.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',path = '/css/schedule.css')}}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
@@ -19,6 +21,7 @@
                 <li><a href="coaches.html">Тренери</a></li>
                 <li><a href="clients.html">Клієнти</a></li>
                 <li class="active-page"><a href="groups.html">Групи</a></li>
+                <li><a href="subscriptions.html">Абонементи</a></li>
                 <li><a href="stats.html">Статистика</a></li>
             </ul>
         </nav>
@@ -37,6 +40,7 @@
             <a href="coaches.html" class="dropdown-item">Тренери</a>
             <a href="clients.html" class="dropdown-item">Клієнти</a>
             <a href="groups.html" class="dropdown-item">Групи</a>
+            <a href="subscriptions.html" class="dropdown-item">Абонементи</a>
             <a href="stats.html" class="dropdown-item">Статистика</a>
         </div>
     </header>
@@ -101,6 +105,15 @@
                         <label for="groupDescription">Опис</label>
                         <textarea class="form-control" id="groupDescription" rows="3"></textarea>
                     </div>
+                    
+                    <!-- Секция расписания -->
+                    <div id="scheduleSection">
+                        <h4>Розклад занять</h4>
+                        <div id="schedulesList">
+                            <!-- Элементы расписания будут добавлены динамически -->
+                        </div>
+                        <button type="button" id="addScheduleBtn" class="action-button">Додати розклад</button>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -144,6 +157,7 @@
                 <div class="group-tabs">
                     <button class="tab-button active" data-tab="members">Учасники</button>
                     <button class="tab-button" data-tab="lessons">Заняття</button>
+                    <button class="tab-button" data-tab="schedules">Розклад</button>
                 </div>
 
                 <div class="tab-panel active" id="members-panel">
@@ -175,6 +189,15 @@
                     </div>
                     <div id="lessonsList" class="list-container">
                         <!-- Список занятий будет добавлен динамически -->
+                    </div>
+                </div>
+                
+                <div class="tab-panel" id="schedules-panel">
+                    <div class="panel-actions">
+                        <button class="action-button" id="addScheduleBtn">Додати розклад</button>
+                    </div>
+                    <div id="detailSchedulesList" class="list-container">
+                        <!-- Список расписаний будет добавлен динамически -->
                     </div>
                 </div>
             </div>
@@ -249,9 +272,49 @@
         </div>
     </div>
 
+    <!-- Модальное окно добавления расписания -->
+    <div id="scheduleModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Додавання розкладу</h3>
+                <button class="modal-close" id="closeScheduleModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <div class="form-group">
+                        <label for="dayOfWeek">День тижня</label>
+                        <select class="form-control" id="dayOfWeek" required>
+                            <option value="0">Понеділок</option>
+                            <option value="1">Вівторок</option>
+                            <option value="2">Середа</option>
+                            <option value="3">Четвер</option>
+                            <option value="4">П'ятниця</option>
+                            <option value="5">Субота</option>
+                            <option value="6">Неділя</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startTime">Час початку</label>
+                            <input type="time" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endTime">Час закінчення</label>
+                            <input type="time" class="form-control" id="endTime" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelScheduleBtn">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveScheduleBtn">Додати</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Скрипты -->
     <script src="{{ url_for('static',path = '/js/menu.js')}}"></script>
-    <script src="{{ url_for('static',path = '/js/data/group-mock-data.js')}}"></script>
+    <!-- <script src="{{ url_for('static',path = '/js/data/group-mock-data.js')}}"></script> -->
     <script src="{{ url_for('static',path = '/js/group.js')}}"></script>
 </body>
 </html>

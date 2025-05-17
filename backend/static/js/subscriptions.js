@@ -4,6 +4,7 @@ let subscriptions = [];
 let coaches = [];
 let groups = [];
 let clients = [];
+let schedules = []; // Временное хранение расписаний для текущего шаблона
 
 // API эндпоинты
 const API_ENDPOINTS = {
@@ -28,6 +29,7 @@ const statusFilter = document.getElementById('statusFilter');
 
 // DOM-элементы модальных окон
 const templateModal = document.getElementById('templateModal');
+const scheduleModal = document.getElementById('scheduleModal');
 const templateDetailsModal = document.getElementById('templateDetailsModal');
 const subscriptionDetailsModal = document.getElementById('subscriptionDetailsModal');
 
@@ -87,7 +89,13 @@ function initializeEventHandlers() {
     document.getElementById('saveTemplateBtn').addEventListener('click', saveTemplate);
     
     // Изменение группы в форме шаблона
-    document.getElementById('templateGroup').addEventListener('change', updateTemplateSchedulesFromGroup);
+    document.getElementById('templateGroup').addEventListener('change', toggleScheduleSection);
+    
+    // Обработчики для модального окна расписания
+    document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
+    document.getElementById('closeScheduleModal').addEventListener('click', closeScheduleModal);
+    document.getElementById('cancelScheduleBtn').addEventListener('click', closeScheduleModal);
+    document.getElementById('saveScheduleBtn').addEventListener('click', addScheduleItem);
     
     // Обработчики для модального окна деталей шаблона
     document.getElementById('closeTemplateDetailsModal').addEventListener('click', closeTemplateDetailsModal);
@@ -224,21 +232,6 @@ async function loadSubscriptionDetails(subscriptionId) {
         if (subscription) {
             openSubscriptionDetailsModal(subscription);
         }
-    }
-}
-
-// Загрузка расписаний для группы
-async function loadGroupSchedules(groupId) {
-    try {
-        const response = await fetch(`${API_ENDPOINTS.GROUPS}/${groupId}/schedules`);
-        if (!response.ok) {
-            throw new Error('Failed to load group schedules');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error loading group schedules:', error);
-        // Для тестирования без сервера
-        return MOCK_GROUP_SCHEDULES[groupId] || [];
     }
 }
 
@@ -523,57 +516,16 @@ function populateClientFilter() {
     });
 }
 
-// Обновление расписаний шаблона при изменении группы
-async function updateTemplateSchedulesFromGroup() {
+// Переключение отображения секции расписания
+function toggleScheduleSection() {
     const groupId = document.getElementById('templateGroup').value;
-    
-    // Скрываем/показываем секцию расписания
     const scheduleSection = document.getElementById('scheduleSection');
-    if (!groupId) {
-        scheduleSection.style.display = 'none';
-        return;
-    }
     
-    // Если выбрана группа, загружаем ее расписания
-    try {
-        const groupSchedules = await loadGroupSchedules(parseInt(groupId));
-        
-        // Отображаем расписания группы (только для ознакомления)
-        renderGroupSchedulesList(groupSchedules);
-        
+    if (groupId) {
         scheduleSection.style.display = 'block';
-    } catch (error) {
-        console.error('Error loading group schedules:', error);
+    } else {
         scheduleSection.style.display = 'none';
     }
-}
-
-// Отображение расписаний группы в шаблоне (только для просмотра)
-function renderGroupSchedulesList(scheduleItems) {
-    const schedulesList = document.getElementById('schedulesList');
-    
-    schedulesList.innerHTML = '';
-    
-    if (!scheduleItems || scheduleItems.length === 0) {
-        schedulesList.innerHTML = '<p>У вибраної групи немає розкладу занять</p>';
-        return;
-    }
-    
-    const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
-    
-    scheduleItems.forEach(schedule => {
-        const scheduleItem = document.createElement('div');
-        scheduleItem.className = 'schedule-item';
-        
-        scheduleItem.innerHTML = `
-            <div class="schedule-info">
-                <div class="schedule-day">${dayNames[schedule.day_of_the_week]}</div>
-                <div class="schedule-time">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</div>
-            </div>
-        `;
-        
-        schedulesList.appendChild(scheduleItem);
-    });
 }
 
 // Открытие модального окна создания шаблона
@@ -586,7 +538,9 @@ function openCreateTemplateModal() {
     document.getElementById('templateLessons').value = '8';
     document.getElementById('templateValidity').value = '30';
     
-    // Скрываем секцию расписания
+    // Очищаем список расписаний
+    schedules = [];
+    document.getElementById('schedulesList').innerHTML = '';
     document.getElementById('scheduleSection').style.display = 'none';
     
     templateModal.classList.add('active');
@@ -610,8 +564,12 @@ function openEditTemplateModal(template) {
     document.getElementById('templateGroup').value = template.group_id || '';
     document.getElementById('templateDescription').value = template.description || '';
     
-    // Обновляем расписания при изменении группы
-    updateTemplateSchedulesFromGroup();
+    // Загружаем расписания для шаблона
+    schedules = template.schedules || [];
+    renderSchedulesList();
+    
+    // Отображаем секцию расписания если выбрана группа
+    toggleScheduleSection();
     
     closeTemplateDetailsModal();
     templateModal.classList.add('active');
@@ -634,7 +592,8 @@ async function saveTemplate() {
         valid_days: parseInt(document.getElementById('templateValidity').value),
         coach_id: parseInt(document.getElementById('templateCoach').value),
         group_id: document.getElementById('templateGroup').value ? parseInt(document.getElementById('templateGroup').value) : null,
-        description: document.getElementById('templateDescription').value || ''
+        description: document.getElementById('templateDescription').value || '',
+        schedules: schedules
     };
     
     try {
@@ -674,6 +633,89 @@ async function saveTemplate() {
     }
 }
 
+// Открытие модального окна добавления расписания
+function openScheduleModal() {
+    document.getElementById('scheduleForm').reset();
+    
+    // Устанавливаем значения по умолчанию
+    const now = new Date();
+    document.getElementById('startTime').value = `${String(now.getHours()).padStart(2, '0')}:00`;
+    document.getElementById('endTime').value = `${String(now.getHours() + 1).padStart(2, '0')}:30`;
+    
+    scheduleModal.classList.add('active');
+}
+
+// Закрытие модального окна расписания
+function closeScheduleModal() {
+    scheduleModal.classList.remove('active');
+    document.getElementById('scheduleForm').reset();
+}
+
+// Добавление элемента расписания
+function addScheduleItem() {
+    const scheduleForm = document.getElementById('scheduleForm');
+    
+    if (!scheduleForm.checkValidity()) {
+        alert('Будь ласка, заповніть всі обов\'язкові поля');
+        return;
+    }
+    
+    const dayOfWeek = parseInt(document.getElementById('dayOfWeek').value);
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    
+    // Добавляем новый элемент расписания
+    const newSchedule = {
+        id: Date.now(), // Временный ID
+        day_of_the_week: dayOfWeek,
+        start_time: startTime,
+        end_time: endTime
+    };
+    
+    schedules.push(newSchedule);
+    renderSchedulesList();
+    closeScheduleModal();
+}
+
+// Отображение списка расписаний
+function renderSchedulesList() {
+    const schedulesList = document.getElementById('schedulesList');
+    schedulesList.innerHTML = '';
+    
+    if (schedules.length === 0) {
+        schedulesList.innerHTML = '<p>Розклад не додано</p>';
+        return;
+    }
+    
+    schedules.forEach(schedule => {
+        const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
+        const dayName = dayNames[schedule.day_of_the_week];
+        
+        const scheduleItem = document.createElement('div');
+        scheduleItem.className = 'schedule-item';
+        scheduleItem.innerHTML = `
+            <div class="schedule-info">
+                <div class="schedule-day">${dayName}</div>
+                <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
+            </div>
+            <div class="schedule-actions">
+                <button type="button" class="remove-schedule" data-id="${schedule.id}">&times;</button>
+            </div>
+        `;
+        
+        schedulesList.appendChild(scheduleItem);
+    });
+    
+    // Добавляем обработчики для кнопок удаления
+    document.querySelectorAll('.remove-schedule').forEach(button => {
+        button.addEventListener('click', function() {
+            const scheduleId = parseInt(this.dataset.id);
+            schedules = schedules.filter(s => s.id !== scheduleId);
+            renderSchedulesList();
+        });
+    });
+}
+
 // Открытие модального окна деталей шаблона
 function openTemplateDetailsModal(template) {
     document.getElementById('templateDetailsTitle').textContent = template.name;
@@ -693,54 +735,30 @@ function openTemplateDetailsModal(template) {
     document.getElementById('detailTemplateGroup').textContent = groupName;
     document.getElementById('detailTemplateDescription').textContent = template.description || 'Опис відсутній';
     
-    // Если шаблон привязан к группе, загружаем и отображаем ее расписание
-    const schedulesList = document.getElementById('detailSchedulesList');
-    schedulesList.innerHTML = '<p>Завантаження розкладу...</p>';
-    
-    if (template.group_id) {
-        loadGroupSchedules(template.group_id)
-            .then(schedules => {
-                if (!schedules || schedules.length === 0) {
-                    schedulesList.innerHTML = '<p>Розклад не додано для групи</p>';
-                } else {
-                    renderTemplateSchedulesList(schedules);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading schedules:', error);
-                schedulesList.innerHTML = '<p>Помилка при завантаженні розкладу</p>';
-            });
-    } else {
-        schedulesList.innerHTML = '<p>Індивідуальний шаблон без розкладу</p>';
-    }
-    
-    templateDetailsModal.classList.add('active');
-}
-
-// Отображение расписаний в деталях шаблона
-function renderTemplateSchedulesList(schedules) {
+    // Отображаем расписание
     const schedulesList = document.getElementById('detailSchedulesList');
     schedulesList.innerHTML = '';
     
-    if (!schedules || schedules.length === 0) {
+    if (!template.schedules || template.schedules.length === 0) {
         schedulesList.innerHTML = '<p>Розклад не додано</p>';
-        return;
+    } else {
+        const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
+        
+        template.schedules.forEach(schedule => {
+            const dayName = dayNames[schedule.day_of_the_week];
+            const scheduleItem = document.createElement('div');
+            scheduleItem.className = 'schedule-item';
+            scheduleItem.innerHTML = `
+                <div class="schedule-info">
+                    <div class="schedule-day">${dayName}</div>
+                    <div class="schedule-time">${schedule.start_time.substring(0, 5)} - ${schedule.end_time.substring(0, 5)}</div>
+                </div>
+            `;
+            schedulesList.appendChild(scheduleItem);
+        });
     }
     
-    const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
-    
-    schedules.forEach(schedule => {
-        const dayName = dayNames[schedule.day_of_the_week];
-        const scheduleItem = document.createElement('div');
-        scheduleItem.className = 'schedule-item';
-        scheduleItem.innerHTML = `
-            <div class="schedule-info">
-                <div class="schedule-day">${dayName}</div>
-                <div class="schedule-time">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</div>
-            </div>
-        `;
-        schedulesList.appendChild(scheduleItem);
-    });
+    templateDetailsModal.classList.add('active');
 }
 
 // Закрытие модального окна деталей шаблона
@@ -814,7 +832,7 @@ function openSubscriptionDetailsModal(subscription) {
             lessonItem.innerHTML = `
                 <div class="lesson-info">
                     <div class="lesson-date">${formatDate(lesson.date)}</div>
-                    <div class="lesson-time">${formatTime(lesson.start_time)} - ${formatTime(lesson.end_time)}</div>
+                    <div class="lesson-time">${lesson.start_time.substring(0, 5)} - ${lesson.end_time.substring(0, 5)}</div>
                 </div>
                 <div class="lesson-status ${statusClass}">${statusText}</div>
             `;
@@ -822,29 +840,27 @@ function openSubscriptionDetailsModal(subscription) {
         });
     }
     
-    // Отображаем расписание группы, если оно есть
+    // Отображаем расписание
     const schedulesList = document.getElementById('detailSubscriptionSchedules');
-    schedulesList.innerHTML = '<p>Завантаження розкладу...</p>';
+    schedulesList.innerHTML = '';
     
-    // Получаем шаблон абонемента
-    const template = templates.find(t => t.id === subscription.template_id);
-    
-    if (template && template.group_id) {
-        // Если шаблон связан с группой, загружаем расписание группы
-        loadGroupSchedules(template.group_id)
-            .then(schedules => {
-                if (!schedules || schedules.length === 0) {
-                    schedulesList.innerHTML = '<p>Розклад групи не знайдено</p>';
-                } else {
-                    renderSubscriptionSchedulesList(schedules);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading group schedules:', error);
-                schedulesList.innerHTML = '<p>Помилка при завантаженні розкладу групи</p>';
-            });
+    if (!subscription.schedules || subscription.schedules.length === 0) {
+        schedulesList.innerHTML = '<p>Розклад не додано</p>';
     } else {
-        schedulesList.innerHTML = '<p>Індивідуальний абонемент без розкладу</p>';
+        const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
+        
+        subscription.schedules.forEach(schedule => {
+            const dayName = dayNames[schedule.day_of_the_week];
+            const scheduleItem = document.createElement('div');
+            scheduleItem.className = 'schedule-item';
+            scheduleItem.innerHTML = `
+                <div class="schedule-info">
+                    <div class="schedule-day">${dayName}</div>
+                    <div class="schedule-time">${schedule.start_time.substring(0, 5)} - ${schedule.end_time.substring(0, 5)}</div>
+                </div>
+            `;
+            schedulesList.appendChild(scheduleItem);
+        });
     }
     
     // Состояние кнопки "Анулювати"
@@ -857,32 +873,6 @@ function openSubscriptionDetailsModal(subscription) {
     }
     
     subscriptionDetailsModal.classList.add('active');
-}
-
-// Отображение расписаний в деталях абонемента
-function renderSubscriptionSchedulesList(schedules) {
-    const schedulesList = document.getElementById('detailSubscriptionSchedules');
-    schedulesList.innerHTML = '';
-    
-    if (!schedules || schedules.length === 0) {
-        schedulesList.innerHTML = '<p>Розклад не додано</p>';
-        return;
-    }
-    
-    const dayNames = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя'];
-    
-    schedules.forEach(schedule => {
-        const dayName = dayNames[schedule.day_of_the_week];
-        const scheduleItem = document.createElement('div');
-        scheduleItem.className = 'schedule-item';
-        scheduleItem.innerHTML = `
-            <div class="schedule-info">
-                <div class="schedule-day">${dayName}</div>
-                <div class="schedule-time">${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}</div>
-            </div>
-        `;
-        schedulesList.appendChild(scheduleItem);
-    });
 }
 
 // Закрытие модального окна деталей абонемента
@@ -931,14 +921,6 @@ function formatDate(dateString) {
     }
 }
 
-// Вспомогательная функция для форматирования времени
-function formatTime(timeString) {
-    if (typeof timeString === 'string' && timeString.includes(':')) {
-        return timeString.substring(0, 5);
-    }
-    return timeString;
-}
-
 // Мок-данные для тестирования
 const MOCK_COACHES = [
     { id: 1, name: "Олена Петренко" },
@@ -958,23 +940,6 @@ const MOCK_CLIENTS = [
     { id: 3, name: "Наталія Шевченко" }
 ];
 
-// Мок-данные расписаний групп
-const MOCK_GROUP_SCHEDULES = {
-    1: [
-        { id: 1, day_of_the_week: 1, start_time: "18:00:00", end_time: "19:30:00" },
-        { id: 2, day_of_the_week: 3, start_time: "18:00:00", end_time: "19:30:00" }
-    ],
-    2: [
-        { id: 3, day_of_the_week: 0, start_time: "17:00:00", end_time: "18:30:00" },
-        { id: 4, day_of_the_week: 2, start_time: "17:00:00", end_time: "18:30:00" },
-        { id: 5, day_of_the_week: 4, start_time: "17:00:00", end_time: "18:30:00" }
-    ],
-    3: [
-        { id: 6, day_of_the_week: 1, start_time: "19:00:00", end_time: "20:30:00" },
-        { id: 7, day_of_the_week: 4, start_time: "19:00:00", end_time: "20:30:00" }
-    ]
-};
-
 // Пример данных шаблонов абонементов
 const MOCK_TEMPLATES = [
     {
@@ -985,7 +950,11 @@ const MOCK_TEMPLATES = [
         valid_days: 30,
         coach_id: 1,
         group_id: 1,
-        description: "Базовий абонемент для початківців, включає 8 групових занять протягом місяця."
+        description: "Базовий абонемент для початківців, включає 8 групових занять протягом місяця.",
+        schedules: [
+            { id: 1, day_of_the_week: 1, start_time: "18:00:00", end_time: "19:30:00" },
+            { id: 2, day_of_the_week: 3, start_time: "18:00:00", end_time: "19:30:00" }
+        ]
     },
     {
         id: 2,
@@ -995,7 +964,8 @@ const MOCK_TEMPLATES = [
         valid_days: 45,
         coach_id: 2,
         group_id: null,
-        description: "Індивідуальні заняття з тренером, 5 занять протягом півтора місяця."
+        description: "Індивідуальні заняття з тренером, 5 занять протягом півтора місяця.",
+        schedules: []
     },
     {
         id: 3,
@@ -1005,7 +975,12 @@ const MOCK_TEMPLATES = [
         valid_days: 45,
         coach_id: 3,
         group_id: 3,
-        description: "Розширений абонемент для просунутих клієнтів, включає 12 занять протягом півтора місяця."
+        description: "Розширений абонемент для просунутих клієнтів, включає 12 занять протягом півтора місяця.",
+        schedules: [
+            { id: 3, day_of_the_week: 0, start_time: "17:00:00", end_time: "18:30:00" },
+            { id: 4, day_of_the_week: 2, start_time: "17:00:00", end_time: "18:30:00" },
+            { id: 5, day_of_the_week: 4, start_time: "17:00:00", end_time: "18:30:00" }
+        ]
     }
 ];
 
@@ -1028,6 +1003,10 @@ const MOCK_SUBSCRIPTIONS = [
             { id: 3, date: "2025-05-14", start_time: "18:00:00", end_time: "19:30:00", is_cancelled: false },
             { id: 4, date: "2025-05-17", start_time: "18:00:00", end_time: "19:30:00", is_cancelled: false },
             { id: 5, date: "2025-05-19", start_time: "18:00:00", end_time: "19:30:00", is_cancelled: false }
+        ],
+        schedules: [
+            { id: 1, day_of_the_week: 1, start_time: "18:00:00", end_time: "19:30:00" },
+            { id: 2, day_of_the_week: 3, start_time: "18:00:00", end_time: "19:30:00" }
         ]
     },
     {
@@ -1045,7 +1024,8 @@ const MOCK_SUBSCRIPTIONS = [
             { id: 6, date: "2025-05-11", start_time: "10:00:00", end_time: "11:30:00", is_cancelled: false },
             { id: 7, date: "2025-05-18", start_time: "10:00:00", end_time: "11:30:00", is_cancelled: false },
             { id: 8, date: "2025-05-25", start_time: "10:00:00", end_time: "11:30:00", is_cancelled: false }
-        ]
+        ],
+        schedules: []
     },
     {
         id: 3,
@@ -1058,6 +1038,11 @@ const MOCK_SUBSCRIPTIONS = [
         total_lessons: 12,
         used_lessons: 12,
         valid_until: "2025-05-01",
-        lessons: []
+        lessons: [],
+        schedules: [
+            { id: 3, day_of_the_week: 0, start_time: "17:00:00", end_time: "18:30:00" },
+            { id: 4, day_of_the_week: 2, start_time: "17:00:00", end_time: "18:30:00" },
+            { id: 5, day_of_the_week: 4, start_time: "17:00:00", end_time: "18:30:00" }
+        ]
     }
 ];
