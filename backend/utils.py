@@ -2,10 +2,12 @@ from connection import  Connection
 from sqlalchemy.orm import Session
 from models import Lesson, Client, Group,Coach,Subscription
 from datetime import datetime,date, timedelta
-import time
+
+
 def get_all_lessons():
     session = Connection.get_session()
     lessons = list(session.query(Lesson).all())
+
     events = []
     for lesson in lessons:
         if lesson.is_cancelled:
@@ -35,6 +37,7 @@ def get_all_lessons():
                 'className':class_name,
             }
         )
+    
     return events
 
 def change_lesson_by_id(id: int, session: Session ,**kwargs):

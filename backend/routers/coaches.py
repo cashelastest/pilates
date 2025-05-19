@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Request,Depends
+from fastapi import APIRouter, Request,Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from routers.client import Manager
-from models import Coach, Client, Subscription, Group
+from models import Coach, Client, Subscription, Group,User
 from pathlib import Path
 import numpy as np
 from utils import sort_by_monthes
+from auth.auth import get_current_user_from_cookie
 coaches_router = APIRouter(prefix = "/coaches", tags= ["coaches"])
 
 templates = Jinja2Templates(directory='templates')
@@ -34,11 +35,14 @@ class CoachesManager(Manager):
 
 coaches_manager = CoachesManager()
 @coaches_router.get('/')
-def get_clients(request:Request):
+def get_clients(request:Request, user:User = Depends(get_current_user_from_cookie)):
     cards = coaches_manager.get_cards()
-
+    if user.user_type != 'user':
+        return templates.TemplateResponse(
+            'coaches.html', {"request":request, 'cards':cards}
+        )
     return templates.TemplateResponse(
-        'coaches.html', {"request":request, 'cards':cards}
+        request=request, name= 'forbidden.html'
     )
 
 

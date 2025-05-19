@@ -1,10 +1,14 @@
-from fastapi import Request,APIRouter,WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import Request,APIRouter,WebSocket, WebSocketDisconnect, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from typeguard import typechecked
 from connection import Connection
 from utils import get_all_lessons, change_lesson_by_id,get_items_list
 from models import Lesson, Client, Group,Coach,Subscription, SubscriptionSchedule
 from fastapi.templating import Jinja2Templates
+from models import User
+from auth.auth import get_current_user_from_cookie
+from connection import Connection
+
 # from pathlib import Path
 dashboard_router = APIRouter(prefix='/dashboard', tags=['dashboard'])
 
@@ -13,29 +17,16 @@ templates = Jinja2Templates(directory='templates')
 
 class DashboardManager:
     def __init__(self):
-        self.active_users = []
         self.session = Connection.get_session()
-    
-    async def connect(self, ws:WebSocket):
-        await ws.accept()
-        self.active_users.append(ws)
-
-
-    def disconnect(self, ws:WebSocket):
-        ws.close()
-        self.active_users.remove(ws)
-
-
-    async def send_lessons(self, ws:WebSocket, is_changed=True):
+    async def send_lessons(self, ws:WebSocket, socket_manager, is_changed=True):
         print('send')
         events = {
             'code':287,
             'data':get_all_lessons()}
         if not is_changed:
-
             await ws.send_json(events)
             return
-        for websocket in self.active_users:
+        for websocket in socket_manager.user_connections.values():
             await websocket.send_json(events)
 
 
@@ -126,8 +117,13 @@ class DashboardManager:
 manager = DashboardManager()
 
 @dashboard_router.get('/')
-async def dashboard_home(request: Request):
+async def dashboard_home(request: Request, user: User = Depends(get_current_user_from_cookie)):
+
+    if user.user_type != "user":
+        return templates.TemplateResponse(
+            request=request, name='index.html'
+        )
     return templates.TemplateResponse(
-        request=request, name='index.html'
-    )
+            request=request, name='forbidden.html'
+        )
 

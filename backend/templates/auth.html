@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+   {% block title %}Вхід {% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{url_for('static', path='css/auth.css')}}">
+    {% endblock %}
+
+    {% block content %}
+    <div class="auth-container">
+        <!-- <div class="auth-image"></div> -->
+        <div class="auth-form-container">
+            <div class="logo">
+                <h1>Pilates Studio</h1>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-form="login-form">Вхід</div>
+                <div class="auth-tab" data-form="register-form">Реєстрація</div>
+            </div>
+
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Login Form -->
+            <form class="auth-form active" id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Логін або Email</label>
+                    <input type="text" class="form-control" id="login-username" required>
+                    <div class="error-message" id="login-username-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Пароль</label>
+                    <div class="password-field">
+                        <input type="password" class="form-control" id="login-password" required>
+                        <span class="password-toggle" onclick="togglePassword('login-password', this)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="error-message" id="login-password-error"></div>
+                </div>
+
+                <div class="form-footer">
+                    <a href="#">Забули пароль?</a>
+                </div>
+
+                <button type="submit" class="auth-btn">Увійти</button>
+            </form>
+
+            <!-- Registration Form -->
+            <form class="auth-form" id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Ім'я та прізвище</label>
+                    <input type="text" class="form-control" id="reg-name" required>
+                    <div class="error-message" id="reg-name-error"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" class="form-control" id="reg-email" required>
+                        <div class="error-message" id="reg-email-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-phone">Телефон</label>
+                        <input type="tel" class="form-control" id="reg-phone">
+                        <div class="error-message" id="reg-phone-error"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-username">Логін</label>
+                    <input type="text" class="form-control" id="reg-username" required>
+                    <div class="error-message" id="reg-username-error"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-password">Пароль</label>
+                        <div class="password-field">
+                            <input type="password" class="form-control" id="reg-password" required>
+                            <span class="password-toggle" onclick="togglePassword('reg-password', this)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="error-message" id="reg-password-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-confirm-password">Підтвердження паролю</label>
+                        <div class="password-field">
+                            <input type="password" class="form-control" id="reg-confirm-password" required>
+                            <span class="password-toggle" onclick="togglePassword('reg-confirm-password', this)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="error-message" id="reg-confirm-password-error"></div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-birth-date">Дата народження</label>
+                        <input type="date" class="form-control" id="reg-birth-date">
+                        <div class="error-message" id="reg-birth-date-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Стать</label>
+                        <div class="gender-options">
+                            <div class="gender-option">
+                                <input type="radio" id="female" name="gender" value="1" checked>
+                                <label for="female">Жіноча</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" id="male" name="gender" value="0">
+                                <label for="male">Чоловіча</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-btn">Зареєструватися</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.auth-tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and forms
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                    
+                    // Add active class to current tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding form
+                    const formId = this.getAttribute('data-form');
+                    document.getElementById(formId).classList.add('active');
+                    
+                    // Hide success message when switching tabs
+                    document.getElementById('successMessage').style.display = 'none';
+                });
+            });
+            
+            // Login form submission
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Reset error messages
+                document.querySelectorAll('.error-message').forEach(error => {
+                    error.style.display = 'none';
+                });
+                
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                // Validate inputs
+                let isValid = true;
+                
+                if (!username) {
+                    showError('login-username-error', 'Будь ласка, введіть логін або email');
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    showError('login-password-error', 'Будь ласка, введіть пароль');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Here you would normally make an API call to authenticate
+                    loginUser(username, password);
+                }
+            });
+            
+            // Registration form submission
+            document.getElementById('register-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Reset error messages
+                document.querySelectorAll('.error-message').forEach(error => {
+                    error.style.display = 'none';
+                });
+                
+                // Get form values
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const phone = document.getElementById('reg-phone').value;
+                const username = document.getElementById('reg-username').value;
+                const password = document.getElementById('reg-password').value;
+                const confirmPassword = document.getElementById('reg-confirm-password').value;
+                const birthDate = document.getElementById('reg-birth-date').value;
+                const gender = document.querySelector('input[name="gender"]:checked').value;
+                
+                // Validate inputs
+                let isValid = true;
+                
+                if (!name) {
+                    showError('reg-name-error', 'Будь ласка, введіть ім\'я та прізвище');
+                    isValid = false;
+                }
+                
+                if (!email) {
+                    showError('reg-email-error', 'Будь ласка, введіть email');
+                    isValid = false;
+                } else if (!isValidEmail(email)) {
+                    showError('reg-email-error', 'Будь ласка, введіть коректний email');
+                    isValid = false;
+                }
+                
+                if (phone && !isValidPhone(phone)) {
+                    showError('reg-phone-error', 'Будь ласка, введіть коректний номер телефону');
+                    isValid = false;
+                }
+                
+                if (!username) {
+                    showError('reg-username-error', 'Будь ласка, введіть логін');
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    showError('reg-password-error', 'Будь ласка, введіть пароль');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    showError('reg-password-error', 'Пароль повинен містити щонайменше 6 символів');
+                    isValid = false;
+                }
+                
+                if (!confirmPassword) {
+                    showError('reg-confirm-password-error', 'Будь ласка, підтвердіть пароль');
+                    isValid = false;
+                } else if (password !== confirmPassword) {
+                    showError('reg-confirm-password-error', 'Паролі не співпадають');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Here you would normally make an API call to register the user
+                    registerUser({
+                        name,
+                        email,
+                        phone,
+                        username,
+                        password,
+                        birth_date: birthDate,
+                        sex: gender === "1" // Convert to boolean (1 is female, 0 is male)
+                    });
+                }
+            });
+        });
+        
+        // Toggle password visibility
+        function togglePassword(inputId, toggleBtn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggleBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 3L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            } else {
+                input.type = 'password';
+                toggleBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            }
+        }
+        
+        // Show error message
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Validate email format
+        function isValidEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+        
+        // Validate phone format
+        function isValidPhone(phone) {
+            // Simple validation for Ukrainian phone format
+            const re = /^(\+380|0)[0-9]{9}$/;
+            return re.test(String(phone));
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            
+            // Scroll to the top to make sure the message is visible
+            window.scrollTo(0, 0);
+        }
+        
+        // Login user function
+        function loginUser(username, password) {
+
+            fetch('/api/auth/login/', {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                },
+                body:JSON.stringify({
+                    username: username,
+                    password: password
+
+                })
+            })
+            .then(response =>{
+                 console.log(response.status)
+                return response.json()
+            })
+            .then(data =>{
+
+
+                if (data.token){
+                console.log(data.token);
+                localStorage.setItem('token', data.token);
+                window.location.href = '/dashboard/'; 
+            }
+            })
+
+        }
+        
+        // Register user function
+        function registerUser(userData) {
+
+            
+            console.log('Registering user:', userData);
+            fetch('/api/auth/registration/', {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                },
+                body:JSON.stringify({
+                    username: userData.username,
+                    email: userData.email,
+                    name: userData.name,
+                    birth_date:userData.birth_date,
+                    phone: userData.phone,
+                    sex: userData.sex,
+                    password: userData.password
+
+                })
+            })
+            .then(response =>{
+                 console.log(response.status)
+                return response.json()
+            })
+            .then(data =>{
+                console.log(data);
+            })
+            // setTimeout(() => {
+            //     // Simulate a successful registration
+            //     showSuccess('Реєстрація успішна! Тепер ви можете увійти в систему.');
+                
+            //     // Switch to login tab
+            //     document.querySelector('.auth-tab[data-form="login-form"]').click();
+                
+            //     // Clear registration form
+            //     document.getElementById('register-form').reset();
+            // }, 1000);
+        }
+    </script>
+{% endblock %}

@@ -1,39 +1,82 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,Query,status
 from fastapi.websockets import WebSocket, WebSocketDisconnect
+from auth.auth import decode_jwt_token
+from typing import List, Dict
 from routers.dashboard import manager
 from routers.client import clinet_manager
 from routers.clients import clients_manager
 from routers.group import GroupManager
-from models import Lesson
+from models import Lesson, Client,User
+from connection import Connection
 socket = APIRouter(prefix = '/socket')
 group_manager = GroupManager()
+
 class SocketManager:
-    connecions = []
+    def __init__(self):
+        self.user_connections: Dict[str, List[WebSocket]] = {}
+        self.connections_to_user: Dict[WebSocket, str] = {}
+        self.user_data: Dict[str, dict] = {}
+
+
+    async def connect(self, websocket: WebSocket, user_id:str, user_data: dict = None):
+        await websocket.accept()
+        if user_id not in self.user_connections.keys():
+            self.user_connections[user_id] = []
+        self.user_connections[user_id].append(websocket)
+        self.connections_to_user[websocket] = user_id
+        if user_data:
+            self.user_data[user_id] = user_data
+
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.connections_to_user:
+            user_id = self.connections_to_user[websocket]
+            if user_id in self.user_connections and websocket in self.user_connections[user_id]:
+                self.user_connections[user_id].remove(websocket)
+                if not self.user_connections[user_id]:
+                    del self.user_connections[user_id]
+                    if user_id in self.user_data:
+                        del self.user_data[user_id]
+            del self.connections_to_user[websocket]
+
+
+socket_manager = SocketManager()
 
 
 @socket.websocket('/')
-async def dashboard_socket(ws:WebSocket):
-    await manager.connect(ws)
-    SocketManager.connecions.append(ws)
+async def dashboard_socket(ws:WebSocket, token: str = Query(None)):
+    if not token:
+        print(token)
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+    
+    payload = await decode_jwt_token(token=token)
+    if not payload:
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+    username = payload.get("sub")
+    with Connection.session_scope() as session:
+        user = session.query(User).filter(User.username == username).first()
+        if not user:
+            await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        await socket_manager.connect(ws, user.id)
     try:
         while True:
             data =await manager.recieve_message(ws)
             match data.get('code'):
                 case 187: 
-                    await manager.send_lessons(ws, is_changed=False)
+                    await manager.send_lessons(ws, socket_manager,is_changed=False)
                 case 188:
                     await manager.change_lessons_day_or_time(changed_data=data)
                     await manager.send_lessons(ws)
                 case 189:
                     await manager.send_active_clients(ws)
                 case 190:
-                    print(data)
                     await manager.create_lesson(lesson_data=data['event'])
                     await manager.send_lessons(ws)
                 case 191:
                     await manager.create_subscription(subscription_data=data['subscription'])
-                # case 192:
-                #     await manager.apply_schedule_for_subscription(data['schedule'])
                 case 193:
                     await manager.fetch_clients_subs_coaches(ws)
                 case 194:
@@ -46,15 +89,11 @@ async def dashboard_socket(ws:WebSocket):
                     await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
                     await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
                     await clinet_manager.get_subs(ws, data.get("username"))
- 
                 case 197:
                     await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
                     print('Successfully worked with code 197')
-
                 case 198:
                     await clinet_manager.get_subs(ws, data.get("username"))
-                # case 199:
-                #     await clinet_manager.use_sub(data.get("sub_id"),data.get("client_name"))
                 case 300:
                     await group_manager.get_group_and_coach(ws=ws)
                 case 301: #its for 301, 302, 303
@@ -75,7 +114,6 @@ async def dashboard_socket(ws:WebSocket):
                 case 322:
                     await group_manager.delete_group(data.get('id'))
                 case 330:
-                    print(330)
                     await group_manager.add_member(client_id=data.get('client_id'), group_id = data.get('group_id'))
                     await group_manager.get_group_details(ws=ws, id = data.get('group_id'))
                     await group_manager.get_group_and_coach(ws=ws)
@@ -114,8 +152,8 @@ async def dashboard_socket(ws:WebSocket):
                 'code': 200,
                 'data': 'success'
             })
+
+
     except WebSocketDisconnect:
-        manager.disconnect(ws)
-        if ws in SocketManager.connecions:
-            SocketManager.connecions.remove(ws)
+        socket_manager.disconnect(ws)
         print("Ended websocket connection")

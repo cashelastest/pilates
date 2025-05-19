@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
   // ====================== DASHBOARD.JS ======================
   const calendarEl = document.getElementById('calendar');
-  window.ws = new WebSocket('ws://localhost:8000/socket/');
+  const token = localStorage.getItem("token"); 
+  console.log(token);
+  window.ws = new WebSocket('ws://localhost:8000/socket/?token=' + token);
   let calendar;
   
   // Додаємо стилі для модального вікна, якщо вони потрібні

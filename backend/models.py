@@ -1,17 +1,25 @@
 from sqlalchemy import Column, String, Integer, Boolean, Float, ForeignKey, Time, Date, event
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,backref
 from datetime import datetime,timedelta
+from auth.auth_models import AdminMixin,CoachMixin, UserMixin
 
 @as_declarative()
 class Base:
     id = Column(Integer, autoincrement=True, primary_key=True)
 
 
+class User(Base):
+    __tablename__ = 'users'
+    username = Column(String(100), unique=True)
+    email= Column(String(150), unique=True)
+    password = Column(String(300))
+    user_type = Column(String(20))
+    # user_role_id = Column(Integer, ForeignKey(""))
+
 class ClientGroupAssociation(Base):
     __tablename__ = 'client_group_association'
-    
     client_id = Column(Integer, ForeignKey("clients.id"), primary_key=True)
     group_id = Column(Integer, ForeignKey("groups.id"), primary_key=True)    
     client = relationship('Client', back_populates='group_associations')
@@ -37,8 +45,9 @@ class SubscriptionSchedule(Base):
     coach_schedule = relationship('CoachSchedule', back_populates="schedule")
 
 
-class Coach(Base):
+class Coach(CoachMixin, Base):
     __tablename__ = 'coaches'
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     name = Column(String(60))
     image = Column(String(400), default = "coach.png")
     position= Column(String(500), default = "Тренер")
@@ -50,6 +59,7 @@ class Coach(Base):
     groups = relationship('Group', back_populates="coach")
     lessons = relationship('Lesson', back_populates='coach',cascade="all, delete-orphan")
     subscriptions_templates = relationship("SubscriptionTemplate", back_populates="coach",cascade="all, delete-orphan")
+    user = relationship("User", backref=backref("coach_profile", uselist=False))
 
 
 class Lesson(Base):
@@ -95,27 +105,25 @@ class Subscription(Base):
     schedules = relationship('SubscriptionSchedule', back_populates='subscription',cascade="all, delete-orphan")
 
 
-class Client(Base):
-    __tablename__ = 'clients'    
-    username = Column(String(60))
+class Client(Base, UserMixin):
+    __tablename__ = 'clients'
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     name = Column(String(60))
-    email = Column(String(60))
     phone = Column(String(30))
-    password = Column(String(20))
     status = Column(Boolean) # 1 for active
     date_of_birth = Column(Date)
     balance = Column(Float, default=5000.0)
     sex = Column(Boolean) #0 male, 1 woman
     description = Column(String(300))
     joined = Column(Date)
-    coach_id = Column(Integer, ForeignKey("coaches.id"))
+    coach_id = Column(Integer, ForeignKey("coaches.id"), nullable=True)
     subscriptions = relationship('Subscription', back_populates='client',cascade="all, delete-orphan")
     coach = relationship("Coach", back_populates='clients')
     comments = relationship('Comment', back_populates='client',cascade="all, delete-orphan")
     lessons = relationship('Lesson', back_populates='client', cascade="all, delete-orphan")
     group_associations = relationship('ClientGroupAssociation', back_populates="client", cascade="all, delete-orphan")
     groups = relationship("Group", secondary="client_group_association", viewonly=True)
-
+    user = relationship("User", backref=backref("client_profile", uselist=False))
    
 
 class Group(Base):
@@ -141,6 +149,14 @@ class Comment(Base):
     rate = Column(Integer) # from 1 to 10
     coach = relationship('Coach', back_populates='comments')
     client = relationship("Client", back_populates='comments')
+
+
+class Admin(Base, AdminMixin):
+    __tablename__ = 'admins'
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user = relationship("User", backref=backref("admin_profile", uselist=False))
+    # id = Column(Integer, primary_key=True, autoincrement=True)
+
 
 
 @event.listens_for(Lesson, 'before_insert')
