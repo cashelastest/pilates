@@ -1,10 +1,14 @@
-{% extends "base.html" %}
-   {% block title %}Вхід {% endblock %}
-{% block styles %}
-<link rel="stylesheet" href="{{url_for('static', path='css/auth.css')}}">
-    {% endblock %}
-
-    {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static', path='css/auth.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', path='css/style.css')}}">
+    <title>Вхід</title>
+</head>
+<body>
+    
     <div class="auth-container">
         <!-- <div class="auth-image"></div> -->
         <div class="auth-form-container">
@@ -132,8 +136,10 @@
             </form>
         </div>
     </div>
-{% endblock %}
-{% block scripts %}
+
+
+
+
     <script>
         // Tab switching functionality
         document.addEventListener('DOMContentLoaded', function() {
@@ -375,16 +381,17 @@
             .then(data =>{
                 console.log(data);
             })
-            // setTimeout(() => {
-            //     // Simulate a successful registration
-            //     showSuccess('Реєстрація успішна! Тепер ви можете увійти в систему.');
+            setTimeout(() => {
+                // Simulate a successful registration
+
                 
-            //     // Switch to login tab
-            //     document.querySelector('.auth-tab[data-form="login-form"]').click();
+                // Switch to login tab
+                document.querySelector('.auth-tab[data-form="login-form"]').click();
                 
-            //     // Clear registration form
-            //     document.getElementById('register-form').reset();
-            // }, 1000);
+                // Clear registration form
+                document.getElementById('register-form').reset();
+            }, 1000);
         }
     </script>
-{% endblock %}
+</body>
+</html>

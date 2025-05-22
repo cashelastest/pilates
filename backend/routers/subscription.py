@@ -88,30 +88,32 @@ def get_clients(session = Depends(get_db)):
     return data
 
 @api_subscription_router.get('/templates')
-def get_templates(session = Depends(get_db)):
-    templates =session.query(SubscriptionTemplate).all()
-    data = [{"id":template.id,
-             "name":template.name,
-             "price":template.price,
-             "total_lessons": template.total_lessons,
-             "valid_days":template.valid_days,
-             "coach_id":template.coach.id,
-             "coach_name":template.coach.name,
-             "group_id":template.group.id,
-             "group_name":template.group.name,
-             "description":template.description,
-             "schedules":[
-                 {
-                     "id":schedule.id,
-                     "day_of_the_week":schedule.day_of_the_week,
-                     "start_time": schedule.start_time.strftime("%H:%M:%S"),
-                     "end_time": schedule.end_time.strftime("%H:%M:%S"),
-
-                 } for schedule in template.group.schedules
-             ]
-             } for template in templates]
+def get_templates(session=Depends(get_db)):
+    templates = session.query(SubscriptionTemplate).all()
+    data = []
+    for template in templates:
+        template_data = {
+            "id": template.id,
+            "name": template.name,
+            "price": template.price,
+            "total_lessons": template.total_lessons,
+            "valid_days": template.valid_days,
+            "coach_id": template.coach.id,
+            "coach_name": template.coach.name,
+            "group_id": template.group.id if template.group else None,  # Защита от None
+            "group_name": template.group.name if template.group else None,  # Защита от None
+            "description": template.description,
+            "schedules": [
+                {
+                    "id": schedule.id,
+                    "day_of_the_week": schedule.day_of_the_week,
+                    "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                    "end_time": schedule.end_time.strftime("%H:%M:%S"),
+                } for schedule in (template.group.schedules if template.group else [])  # Защита от None
+            ]
+        }
+        data.append(template_data)
     return data
-
 @api_subscription_router.post("/templates")
 def create_template(template:TemplateCreate, session:Session = Depends(get_db)):
     new_template = SubscriptionTemplate(
@@ -163,29 +165,28 @@ def get_subscriptions(session = Depends(get_db)):
     return data
 
 @api_subscription_router.get("/templates/{template_id}")
-def get_template(template_id:int,session = Depends(get_db)):
+def get_template(template_id: int, session=Depends(get_db)):
     template = session.get(SubscriptionTemplate, template_id)
     if not template:
-        raise HTTPException("No such template")
+        raise HTTPException(status_code=404, detail="No such template")  # Было: raise HTTPException("No such template")
     data = {
-        "id":template.id, 
-        "name":template.name,
-        "price":template.price,
-        "total_lessons":template.total_lessons,
-        "valid_days":template.valid_days,
-        "coach_id":template.coach,
-        "coach_name":template.coach.name,
-        'group_id':template.group_id,
-        "description":template.description,
-        "schedules":[
-                 {
-                     "id":schedule.id,
-                     "day_of_the_week":schedule.day_of_the_week,
-                     "start_time": schedule.start_time.strftime("%H:%M:%S"),
-                     "end_time": schedule.end_time.strftime("%H:%M:%S"),
-
-                 } for schedule in template.group.schedules
-             ]
+        "id": template.id, 
+        "name": template.name,
+        "price": template.price,
+        "total_lessons": template.total_lessons,
+        "valid_days": template.valid_days,
+        "coach_id": template.coach.id,  # Было: "coach_id":template.coach
+        "coach_name": template.coach.name,
+        'group_id': template.group_id,
+        "description": template.description,
+        "schedules": [
+            {
+                "id": schedule.id,
+                "day_of_the_week": schedule.day_of_the_week,
+                "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                "end_time": schedule.end_time.strftime("%H:%M:%S"),
+            } for schedule in (template.group.schedules if template.group else [])  # Добавляем проверку на существование группы
+        ]
     }
     return data
 
@@ -200,10 +201,24 @@ def delete_template(template_id: int, session:Session = Depends(get_db)):
 
     return {"code":200, "data":"Success"}
 
-@api_subscription_router.post("/subscriptions/{template_id}/cancel")
-def delete_subscription(template_id:int, session:Session = Depends(get_db)):
-    template = session.get(SubscriptionTemplate, template_id)
-    if not template:
+# @api_subscription_router.get("/templates/{template_id}")
+# def delete_template(template_id: int, session:Session = Depends(get_db)):
+#     template = session.get(SubscriptionTemplate, template_id)
+#     if not template:
+#         raise HTTPException(status_code=404, detail= "Not Found")
+#     session.delete(template)
+#     session.commit()
+
+#     return {"code":200, "data":"Success"}
+
+@api_subscription_router.post("/subscriptions/{subscription_id}/cancel")
+def delete_subscription(subscription_id:int, session:Session = Depends(get_db)):
+    subscription = session.get(Subscription, subscription_id)
+    for lesson in subscription.lessons:
+        if not lesson.is_used:
+            session.delete(lesson)
+
+    if not subscription:
         raise HTTPException(status_code=404, detail= "Not Found")
-    session.delete(template)
+    session.delete(subscription)
     session.commit()

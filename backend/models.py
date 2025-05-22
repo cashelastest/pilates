@@ -62,23 +62,16 @@ class Coach(CoachMixin, Base):
     user = relationship("User", backref=backref("coach_profile", uselist=False))
 
 
-class Lesson(Base):
-    __tablename__ = 'lessons'
-    price = Column(Float, nullable=False)
-    date = Column(Date)
-    start_time = Column(Time)
-    end_time = Column(Time)
-    is_used = Column(Boolean,default=False)
-    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
-    subscription = relationship('Subscription', back_populates='lessons')
-    is_cancelled = Column(Boolean, default=False)
+class GroupLessonPayed(Base):
+    __tablename__ = 'lessons_payed'
+    lesson_id = Column(Integer, ForeignKey("lessons.id"))
     client_id = Column(Integer, ForeignKey("clients.id"))
-    coach_id = Column(Integer, ForeignKey("coaches.id"))
-    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
-    group = relationship('Group', back_populates='lessons')
-    client = relationship('Client', back_populates='lessons')
-    coach = relationship("Coach", back_populates='lessons')
+    price = Column(Float)
+    client = relationship("Client", backref=backref("group_lessons_payed"))
+    lesson = relationship('Lesson',backref=backref("group_lessons_payed", cascade="all, delete-orphan", uselist=False))
 
+
+# 
 class SubscriptionTemplate(Base):
     __tablename__ = 'subscription_templates'
     name = Column(String(60))
@@ -87,7 +80,7 @@ class SubscriptionTemplate(Base):
     total_lessons = Column(Integer, default=4)
     valid_days = Column(Integer, default=30)
     coach_id = Column(Integer, ForeignKey("coaches.id"))
-    group_id = Column(Integer, ForeignKey("groups.id"))
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
     group = relationship('Group', back_populates="subscriptions_templates")
     coach =relationship("Coach", back_populates="subscriptions_templates")
     subscriptions = relationship('Subscription', back_populates="template", cascade="all, delete-orphan")
@@ -134,7 +127,7 @@ class Group(Base):
     coach_id = Column(Integer, ForeignKey("coaches.id"))
     schedules = relationship('SubscriptionSchedule', back_populates='group')
     coach = relationship("Coach", back_populates='groups')
-    client_associations = relationship('ClientGroupAssociation', back_populates="group")
+    client_associations = relationship('ClientGroupAssociation', back_populates="group", cascade="all, delete-orphan")
     lessons = relationship('Lesson', back_populates='group')
     clients = relationship('Client', secondary="client_group_association", viewonly=True)
     subscriptions_templates = relationship('SubscriptionTemplate', back_populates='group')
@@ -155,34 +148,58 @@ class Admin(Base, AdminMixin):
     __tablename__ = 'admins'
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     user = relationship("User", backref=backref("admin_profile", uselist=False))
-    # id = Column(Integer, primary_key=True, autoincrement=True)
 
 
 
-@event.listens_for(Lesson, 'before_insert')
-def chack_balance(mapper, connection, lesson):
-    session = Session(bind=connection)
-    client = session.get(Client, lesson.client_id)
-    # print(f"CLIENT ID {lesson.client_id}")
-    if client and client.balance <lesson.price:
-        session.rollback()
-        raise Exception("Not enough money!")
-    client.balance -= lesson.price
-    session.commit()
+
+class Lesson(Base):
+    __tablename__ = 'lessons'
+    price = Column(Float, nullable=False)
+    date = Column(Date)
+    start_time = Column(Time)
+    end_time = Column(Time)
+    is_used = Column(Boolean, default=False)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
+    is_cancelled = Column(Boolean, default=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    coach_id = Column(Integer, ForeignKey("coaches.id"))
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
+    is_group_template = Column(Boolean, default=False)
+    subscription = relationship('Subscription', back_populates='lessons')
+    group = relationship('Group', back_populates='lessons')
+    client = relationship('Client', back_populates='lessons')
+    coach = relationship("Coach", back_populates='lessons')
 
 
-@event.listens_for(Subscription, "before_insert")
-def check_balance_for_sub(mapper,connection, subscription):
+# @event.listens_for(Lesson, 'before_insert')
+# def check_balance(mapper, connection, lesson):
+#     session = Session(bind=connection)
+#     client = session.get(Client, lesson.client_id)
+#     # print(f"CLIENT ID {lesson.client_id}")
+#     if client and client.balance <lesson.price:
+#         session.rollback()
+#         raise Exception("Not enough money!")
+#     client.balance -= lesson.price
+#     # session.commit()
+
+@event.listens_for(Lesson, "before_delete")
+def payback_delete_lesson(mapper, connection, lesson):
     session = Session(bind= connection)
-    print(subscription.client_id)
-    client = session.get(Client,subscription.client_id)
-    template = session.get(SubscriptionTemplate,subscription.template_id)
-    if not client:
-        raise Exception(f"Client with id {subscription.client_id} does not exist in db")
-    if not template:
-        raise Exception(f'Subscription template with id {subscription.template_id} does not exist in db')
-    if client.balance < template.price:
-        session.rollback()
-        raise Exception("Not enough money!")
-    client.balance -= template.price
-    session.commit()
+    client = session.get(Client, lesson.client_id)
+    if client:
+        client.balance+=lesson.price
+# @event.listens_for(Subscription, "before_insert")
+# def check_balance_for_sub(mapper,connection, subscription):
+#     session = Session(bind= connection)
+#     print(subscription.client_id)
+#     client = session.get(Client,subscription.client_id)
+#     template = session.get(SubscriptionTemplate,subscription.template_id)
+#     if not client:
+#         raise Exception(f"Client with id {subscription.client_id} does not exist in db")
+#     if not template:
+#         raise Exception(f'Subscription template with id {subscription.template_id} does not exist in db')
+#     if client.balance < template.price:
+#         session.rollback()
+#         raise Exception("Not enough money!")
+#     client.balance -= template.price
+#     session.commit()

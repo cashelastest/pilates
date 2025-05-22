@@ -888,7 +888,7 @@ async function confirmCancelSubscription(subscriptionId) {
         subscriptionId = parseInt(document.getElementById('cancelSubscriptionBtn').dataset.id);
     }
     
-    if (confirm(`Ви впевнені, що хочете анулювати цей абонемент?`)) {
+
         try {
             const response = await fetch(`${API_ENDPOINTS.SUBSCRIPTIONS}/${subscriptionId}/cancel`, {
                 method: 'POST',
@@ -906,7 +906,7 @@ async function confirmCancelSubscription(subscriptionId) {
             console.error('Error cancelling subscription:', error);
             alert(`Помилка при анулюванні абонемента: ${error.message}`);
         }
-    }
+    
 }
 
 // Вспомогательная функция для форматирования даты

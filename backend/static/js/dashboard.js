@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // ====================== DASHBOARD.JS ======================
   const calendarEl = document.getElementById('calendar');
   const token = localStorage.getItem("token"); 
-  console.log(token);
   window.ws = new WebSocket('ws://localhost:8000/socket/?token=' + token);
   let calendar;
   

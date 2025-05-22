@@ -599,23 +599,8 @@ function createNewTrainer(formData) {
     .then(data => {
         // After creating, fetch the complete trainer details
         // just like we do when opening an existing trainer
-        if (data.success && data.trainer && data.trainer.id) {
-            return fetch(`/coaches/api/trainers/${data.trainer.id}/details`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Помилка завантаження даних');
-                    }
-                    return response.json();
-                })
-                .then(fullTrainerData => {
-                    // Return both the original response and the full data
-                    return {
-                        success: data.success,
-                        trainer: fullTrainerData
-                    };
-                });
-        }
-        return data;
+        window.location.reload()
+        return data
     });
 }
 

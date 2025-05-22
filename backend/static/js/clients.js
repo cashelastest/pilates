@@ -27,7 +27,9 @@ let allClients = [];
 function initWebSocket() {
     // Определяем URL для WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/socket/`;
+      const token = localStorage.getItem("token"); 
+
+    const wsUrl = `${protocol}//${window.location.host}/socket/?token=` + token;
     
     socket = new WebSocket(wsUrl);
     
@@ -753,7 +755,8 @@ function addTableEventListeners() {
             
             // Collect data from the form
             const clientData = {
-                username: fullName.toLowerCase().replace(/\s+/g, '.'),
+                username:form.querySelector('input[name="username"]').value.trim() || '',
+                password: form.querySelector('input[name="password"]').value.trim() || '',
                 full_name: fullName,
                 phone: form.querySelector('input[name="phone"]').value.trim() || '',
                 email: form.querySelector('input[name="email"]').value.trim() || '',

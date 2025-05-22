@@ -1,42 +1,51 @@
 from fastapi import APIRouter, Request,Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
-from routers.client import Manager
+
 from models import Coach, Client, Subscription, Group,User
 from pathlib import Path
 import numpy as np
+from auth.auth import get_password_hash
 from utils import sort_by_monthes
 from auth.auth import get_current_user_from_cookie
+from connection import get_db
+from fastapi import HTTPException, UploadFile, File, Form
+from logger import loggers
+from typing import Optional
+from datetime import datetime, timedelta
+import os
+import shutil
+
 coaches_router = APIRouter(prefix = "/coaches", tags= ["coaches"])
+logger = loggers['coaches']
 
 templates = Jinja2Templates(directory='templates')
 MEDIA_PATH = Path("media/")
 print(MEDIA_PATH)
-class CoachesManager(Manager):
-    def get_cards(self):
-        coaches = self.session.query(Coach).all()
-        cards = [{
-            "id":coach.id,
-            "name":coach.name,
-            "position":coach.position,
-            "description":coach.description,
-            "status":coach.status,
-            "image":coach.image,
-            "rate":np.mean([comment.rate for comment in coach.comments]),
-            "clients_amount":len(coach.clients),
-            "groups_amount":len(coach.groups)
-        } for coach in coaches]
-        return cards
-    
 
-    def get_trainer_details(self, trainer_id):
-        coach = self.session.get(Coach, trainer_id)
+def get_cards(session):
+    coaches = session.query(Coach).all()
+    print(coaches)
+    cards = [{
+        "id":coach.id,
+        "name":coach.name,
+        "position":coach.position,
+        "description":coach.description,
+        "status":coach.status,
+        "image":coach.image,
+        "rate":np.mean([comment.rate for comment in coach.comments]),
+        "clients_amount":len(coach.clients),
+        "groups_amount":len(coach.groups)
+    } for coach in coaches]
+    return cards
 
 
-coaches_manager = CoachesManager()
+
+
+
 @coaches_router.get('/')
-def get_clients(request:Request, user:User = Depends(get_current_user_from_cookie)):
-    cards = coaches_manager.get_cards()
+def get_clients(request:Request, user:User = Depends(get_current_user_from_cookie), session = Depends(get_db)):
+    cards = get_cards(session)
     if user.user_type != 'user':
         return templates.TemplateResponse(
             'coaches.html', {"request":request, 'cards':cards}
@@ -46,44 +55,17 @@ def get_clients(request:Request, user:User = Depends(get_current_user_from_cooki
     )
 
 
-# Мок-данные для API эндпоинтов
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from fastapi.responses import JSONResponse
-from typing import Optional
-from datetime import datetime, timedelta
-import os
-import shutil
-
-
-
 
 
 @coaches_router.get("/api/trainers/{trainer_id}/details")
-async def get_trainer_details(trainer_id: int):
+async def get_trainer_details(trainer_id: int, session = Depends(get_db)):
     days_of_week = ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"]
-
-
     trainer_id = int(trainer_id)
-    session = coaches_manager.session
-    coach = session.get(Coach, trainer_id)
 
-    coach_subs=[]
-    for template in coach.subscriptions_templates:
-        coach_subs.extend(session.query(Subscription).filter(Subscription.template_id == template.id).all())
-    schedules =[]
-    for sub in coach_subs:
-        schedules.extend(sub.schedules)
-    schedules_info = []
-    for schedule in schedules:
-        schedule_type = "Група" if schedule.group else "Індивідуальний"
-        schedule_name = schedule.group.name if schedule.group else "Клієнт"
-        schedules_info.append({
-                "day":days_of_week[schedule.day_of_the_week],
-                "time":f"{schedule.start_time.strftime("%H:%M")} - {schedule.end_time.strftime("%H:%M")}",
-                "type": schedule_type,
-                "name":schedule_name
-            })
-    result = {
+    coach = session.get(Coach, trainer_id)
+    
+    if not coach.subscriptions_templates:
+        result = {
             'id':coach.id,
             "name":coach.name,
             "position":coach.position,
@@ -92,29 +74,73 @@ async def get_trainer_details(trainer_id: int):
             "photo":f"/media/coaches/{coach.image}",
             "clients_amount":len(coach.clients),
             'groups_amount':len(coach.groups),
-            "schedule": schedules_info,
+            "schedule": []  # Добавляем пустое расписание
+        }
+        logger.debug(f"coach {coach.id} has not subscriptions_templates")
+        return result
+    
+    schedules_info = []
+    
+    # Получаем расписания из групп тренера
+    for group in coach.groups:
+        if group.schedules:
+            for schedule in group.schedules:
+                schedules_info.append({
+                    "day": days_of_week[schedule.day_of_the_week],
+                    "time": f"{schedule.start_time.strftime('%H:%M')} - {schedule.end_time.strftime('%H:%M')}",
+                    "type": "Група",
+                    "name": group.name
+                })
+    
+    # Получаем индивидуальные расписания из подписок
+    for template in coach.subscriptions_templates:
+        if not template.group_id:  # Только индивидуальные шаблоны
+            active_subs = session.query(Subscription).filter(
+                Subscription.template_id == template.id,
+                Subscription.is_active == True
+            ).all()
+            
+            for sub in active_subs:
+                if sub.schedules:
+                    for schedule in sub.schedules:
+                        client_name = sub.client.name if sub.client else "Клієнт"
+                        schedules_info.append({
+                            "day": days_of_week[schedule.day_of_the_week],
+                            "time": f"{schedule.start_time.strftime('%H:%M')} - {schedule.end_time.strftime('%H:%M')}",
+                            "type": "Індивідуальний",
+                            "name": client_name
+                        })
+    
+    result = {
+        'id':coach.id,
+        "name":coach.name,
+        "position":coach.position,
+        "description":coach.description,
+        "status":coach.status,
+        "photo":f"/media/coaches/{coach.image}",
+        "clients_amount":len(coach.clients),
+        'groups_amount':len(coach.groups),
+        "schedule": schedules_info,
     }
 
     return result
 
 # Получение статистики тренера
 @coaches_router.get("/api/trainers/{trainer_id}/statistics")
-async def get_trainer_statistics(trainer_id: int):
-
+async def get_trainer_statistics(trainer_id: int,session = Depends(get_db)):
     trainer_id = int(trainer_id)
-    session = coaches_manager.session
     coach = session.get(Coach, trainer_id)
-    active_groups = session.query(Group).filter((Group.coach_id == coach.id) and (Group.status == "Active")).all()
+    active_groups = session.query(Group).filter(
+        (Group.coach_id == coach.id) & (Group.status == True)  
+    ).all()
     
-    sessions_history= sort_by_monthes(coach.lessons)
+    sessions_history = sort_by_monthes(coach.lessons)
 
     statistics = {
-        "clients_total":len(coach.clients),
+        "clients_total": len(coach.clients),
         'sessions_month': sum([month_and_count['count'] for month_and_count in sessions_history]),
-        # 'rating': np.mean([comment.rate for comment in coach.comments]), 
         'active_groups': len(active_groups),
-        "sessions_history":sessions_history,
-        # "sessions_types": {'Групові':group_lessons, 'Індивідуальні':len(coach.lessons) - group_lessons}
+        "sessions_history": sessions_history,
     }
     return statistics
 #~ COMMENTS 
@@ -160,7 +186,8 @@ async def update_trainer_info(
     position: str = Form(...),
     description: str = Form(...),
     status: str = Form(...),
-    photo: Optional[UploadFile] = File(None)
+    photo: Optional[UploadFile] = File(None),
+    session = Depends(get_db)
 ):
     statuses = {
         "vacation":"Відпустка",
@@ -170,7 +197,7 @@ async def update_trainer_info(
                 }
     trainer_id = int(trainer_id)
 
-    coach =coaches_manager.session.get(Coach, trainer_id)
+    coach =session.get(Coach, trainer_id)
     if coach is None:
         raise HTTPException(status_code=404, detail="Тренер не знайдений")
     coach.name = name
@@ -187,7 +214,7 @@ async def update_trainer_info(
         with open(relative_photo_path, "wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
             coach.image = photo_filename
-    coaches_manager.session.commit()
+    session.commit()
     print('succesfuly changed!')
     return {"name": coach.name, "position":coach.position, "description":coach.description, "status":coach.status, "photo":"../media/coaches/"+coach.image}
 
@@ -195,10 +222,14 @@ async def update_trainer_info(
 @coaches_router.post("/api/trainers/create/")
 async def create_coach(
     name: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
+    email: str = Form(...), 
     position: str = Form(...),
     description: str = Form(...),
     status: str = Form(...),
     photo: Optional[UploadFile] = File(None),
+    session = Depends(get_db)
 ):
     statuses = {
         "vacation":"Відпустка",
@@ -225,8 +256,16 @@ async def create_coach(
 
 
     try:
-        # Create new coach object (adjust according to your database model)
+        new_user = User(
+            username= username, 
+            email = email,
+            password = get_password_hash(password),
+            user_type = 'coach'
+        )
+        session.add(new_user)
+        session.flush()
         new_coach = Coach(
+            user_id = new_user.id,
             name=name,
             position=position,
             description=description,
@@ -236,9 +275,9 @@ async def create_coach(
         )
         
         # Add to database
-        coaches_manager.session.add(new_coach)
-        coaches_manager.session.commit()
-        coaches_manager.session.refresh(new_coach)
+        session.add(new_coach)
+        session.commit() 
+
         
         # Prepare response data
         coach_data = {

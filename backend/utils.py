@@ -1,42 +1,56 @@
 from connection import  Connection
 from sqlalchemy.orm import Session
-from models import Lesson, Client, Group,Coach,Subscription
+from models import Lesson, Client, Group,Coach,Subscription, GroupLessonPayed
 from datetime import datetime,date, timedelta
+
 
 
 def get_all_lessons():
     session = Connection.get_session()
-    lessons = list(session.query(Lesson).all())
+    
+    # Получаем все уроки кроме шаблонов групповых без оплаты
+    lessons = session.query(Lesson).filter(
+        (Lesson.is_group_template == False) |  # Индивидуальные уроки
+        (Lesson.is_group_template == True) & 
+        (Lesson.id.in_(  # Групповые уроки которые оплачены
+            session.query(GroupLessonPayed.lesson_id)
+        ))
+    ).all()
 
     events = []
     for lesson in lessons:
         if lesson.is_cancelled:
             status = 'cancelled'
-            class_name= 'cancelled_lesson'
-        elif lesson.date <date.today():
+            class_name = 'cancelled_lesson'
+        elif lesson.date < date.today():
             status = 'completed'
             class_name = 'success_lesson'
         else:
             status = 'scheduled'
             class_name = 'future_lesson'
-        if lesson.client:
-            name = lesson.client.name
+            
+        # Для групповых уроков показываем количество участников
+        if lesson.is_group_template:
+            participants_count = session.query(GroupLessonPayed).filter(
+                GroupLessonPayed.lesson_id == lesson.id
+            ).count()
+            title = f"{lesson.group.name} ({participants_count} чел.)"
         else:
-            name = lesson.group.name
-        events.append(
-            {
-                'id':lesson.id,
-                'title':name,
-                "start":f'{lesson.date}T{lesson.start_time}',
-                "end":f'{lesson.date}T{lesson.end_time}',
-                "extendedProps":{
-                    'price':lesson.price,
-                    'trainer':lesson.coach.name,
-                    'status': status
-                },
-                'className':class_name,
-            }
-        )
+            title = lesson.client.name if lesson.client else lesson.group.name
+
+        events.append({
+            'id': lesson.id,
+            'title': title,
+            "start": f'{lesson.date}T{lesson.start_time}',
+            "end": f'{lesson.date}T{lesson.end_time}',
+            "extendedProps": {
+                'price': lesson.price,
+                'trainer': lesson.coach.name,
+                'status': status,
+                'is_group': lesson.is_group_template
+            },
+            'className': class_name,
+        })
     
     return events
 
@@ -68,7 +82,7 @@ def check_is_used_lesson(lesson:Lesson)-> bool:
 
 
 
-def generate_dates(info, count):
+def generate_dates(info, count, current_date = datetime.now()):
     """
     Generate dates based on specified days of the week.
     
@@ -85,15 +99,13 @@ def generate_dates(info, count):
         return []
     
     result = []
-    current_date = datetime.now()
-    
-    # Extract days of week from info
+
     days_of_week = [item[0] for item in info]
     
     while len(result) < count:
         # Python's weekday: Monday=0, Sunday=6
         # Our convention: Sunday=0, Monday=1, ..., Saturday=6
-        current_day_of_week = (current_date.weekday() + 1) % 7
+        current_day_of_week = current_date.weekday() % 7
         
         # Check if current day is in our specified days
         for item in info:

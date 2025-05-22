@@ -379,10 +379,10 @@ function addScheduleToList() {
     const endTime = endTimeInput.value;
     
     // Проверяем заполнены ли все поля
-    if (!day || !startTime || !endTime) {
-        alert('Будь ласка, заповніть всі поля розкладу');
-        return;
-    }
+    // if (!day || !startTime || !endTime) {
+    //     alert('Будь ласка, заповніть всі поля розкладу');
+    //     return;
+    // }
     
     // Проверяем корректность времени
     if (startTime >= endTime) {
@@ -699,7 +699,7 @@ function initializeAllEventHandlers() {
             }
             
             if (!assignSubForm.checkValidity()) {
-                alert('Будь ласка, заповніть всі обов\'язкові поля');
+                // alert('Будь ласка, заповніть всі обов\'язкові поля');
                 return;
             }
             
@@ -994,9 +994,29 @@ function renderLessons(filter = 'all') {
                 <button class="action-button edit-lesson-btn" data-id="${lesson.id}">Деталі</button>
             </div>
         `;
+
         
         lessonsList.appendChild(card);
-    });
+    })
+document.getElementById('lessons-list').addEventListener('click', async (e) => {
+    if (e.target.classList.contains('cancel-lesson-btn')) {
+        const lesson_id = e.target.getAttribute("data-id");
+
+        try {
+            const success = cancelLesson(lesson_id); // предполагаем, что cancelLesson — async
+            if (success) {
+                e.target.closest('.lesson-card').style.display = 'none';
+            } else {
+                alert('Не вдалося скасувати заняття.');
+            }
+        } catch (err) {
+            console.error('Ошибка при отмене занятия:', err);
+            alert('Помилка при скасуванні заняття.');
+        }
+    }
+});
+
+
     
     // Перепривязываем события к новым карточкам
 
@@ -1027,6 +1047,7 @@ function processWebSocketMessage(data) {
             window.clientSubscriptions = data.data.subscriptions;
             window.subscriptionsData = data.data.all_subscriptions;
             renderSubscriptions();
+            populateSelectFields();
             break;
             
         case apiCodes.CLIENT_LESSONS:
@@ -1038,7 +1059,11 @@ function processWebSocketMessage(data) {
         case apiCodes.SELECT_DATA:
             console.log('Received select data');
             window.coachesData = data.data[0];
+            console.log("SUCCESS", data.data[0])
             window.groupsData = data.data[1];
+            // console.log()
+            // window.subscriptionsData
+            // window.subscriptionsData =window.subscriptionData ? window.subscriptionData : data.data[1];
             populateSelectFields();
             break;
             case apiCodes.SUCCESS:
@@ -1083,7 +1108,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.log('Initializing new WebSocket connection');
         try {
-            window.ws = new WebSocket('ws://localhost:8000/socket/');
+            const token = localStorage.getItem("token"); 
+
+            window.ws = new WebSocket('ws://localhost:8000/socket/?token='+token);
             
             window.ws.onopen = function() {
                 console.log('WebSocket connection established');
@@ -1133,7 +1160,7 @@ function populateEditForm() {
     const balanceInput = document.getElementById('editClientBalance');
     const descriptionInput = document.getElementById('editClientDescription');
     const coachInput = document.getElementById('editClientCoach');
-    const groupInput = document.getElementById('editClientGroup');
+
     
     // Проверяем наличие каждого элемента перед установкой значения
     if (nameInput) nameInput.value = window.clientData.name;
@@ -1146,13 +1173,16 @@ function populateEditForm() {
     if (descriptionInput) descriptionInput.value = window.clientData.description || '';
     
     // Выбираем тренера и группу
-    if (coachInput && window.clientData.coach_id) {
-        coachInput.value = window.clientData.coach_id;
-    }
-    
-    if (groupInput && window.clientData.group_id) {
-        groupInput.value = window.clientData.group_id;
-    }
+
+
+        const coach = window.coachesData.find(coach=>window.clientData.coach_name == coach.name)
+
+        // const group = window.groupsData.find(group=>window.clientData.group_name == group.name)
+        coachInput.value =coach ? coach.id : null;
+
+
+        // groupInput.value = group.id;
+
 }
 
 // Получение инициалов из имени
@@ -1343,10 +1373,10 @@ function populateSelectFields() {
     console.log('Populating select fields');
     
     // Если данные еще не загружены, выходим
-    if (!window.coachesData || !window.coachesData.length || !window.groupsData || !window.groupsData.length) {
-        console.warn('Select data not loaded');
-        return;
-    }
+    // if (!window.coachesData || !window.coachesData.length || !window.groupsData || !window.groupsData.length) {
+    //     console.warn('Select data not loaded');
+    //     return;
+    // }
     
     // Тренеры для формы редактирования
     const editClientCoach = document.getElementById('editClientCoach');
@@ -1524,7 +1554,7 @@ function saveNewSchedule() {
     }
     
     if (!addScheduleForm.checkValidity()) {
-        alert('Будь ласка, заповніть всі обов\'язкові поля');
+        // alert('Будь ласка, заповніть всі обов\'язкові поля');
         return;
     }
     
@@ -1991,7 +2021,7 @@ function saveEditedSchedule() {
     const endTime = endTimeInput.value;
     
     if (!dayOfWeek || !startTime || !endTime) {
-        alert('Будь ласка, заповніть усі поля розкладу');
+        // alert('Будь ласка, заповніть усі поля розкладу');
         return;
     }
     
@@ -2256,33 +2286,26 @@ function deleteSchedule(scheduleId) {
 
 // Отмена урока
 function cancelLesson(lessonId) {
-    console.log('Canceling lesson:', lessonId);
-    
-    if (confirm('Ви впевнені, що хочете скасувати це заняття?')) {
-        const clientId = new URLSearchParams(window.location.search).get('username') || 1;
-        
+
         // Отправка данных на сервер
         if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-            const apiCodes = window.API_CODES || {
-                USE_SUBSCRIPTION: 1909,
-                GET_CLIENT_LESSONS: 197
-            };
-            
+
             ws.send(JSON.stringify({
-                code: apiCodes.CANCEL_LESSON,
+                code:  window.API_CODES.CANCEL_LESSON,
                 id: lessonId
             }));
             
             // Обновляем данные уроков
-            ws.send(JSON.stringify({
-                code: apiCodes.GET_CLIENT_LESSONS,
-                username: clientId
-            }));
+            // ws.send(JSON.stringify({
+            //     code:window.API_CODES.GET_CLIENT_LESSONS,
+            //     username: clientId
+            // // }));
+            return true;
         } else {
             alert('Немає з\'єднання з сервером');
         }
     }
-}
+
 
 // Просмотр деталей урока
 function viewLessonDetails(lessonId) {
@@ -2664,7 +2687,7 @@ function viewLessonDetails(lessonId) {
             UPDATE_SUBSCRIPTION: 299,
             ADD_SCHEDULE: 297,
             DELETE_SCHEDULE: 298,
-            USE_SUBSCRIPTION: 199
+            CANCEL_LESSON: 199
         };
     }
     
@@ -2712,7 +2735,9 @@ function viewLessonDetails(lessonId) {
                 console.log('Initializing new WebSocket connection');
                 
                 try {
-                    window.ws = new WebSocket('ws://localhost:8000/socket/');
+const token = localStorage.getItem("token"); 
+
+            window.ws = new WebSocket('ws://localhost:8000/socket/?token='+token);
                     
                     window.ws.onopen = function() {
                         console.log('WebSocket connection established');

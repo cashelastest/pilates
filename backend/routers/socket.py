@@ -3,7 +3,7 @@ from fastapi.websockets import WebSocket, WebSocketDisconnect
 from auth.auth import decode_jwt_token
 from typing import List, Dict
 from routers.dashboard import manager
-from routers.client import clinet_manager
+from routers.client import client_manager
 from routers.clients import clients_manager
 from routers.group import GroupManager
 from models import Lesson, Client,User
@@ -80,20 +80,26 @@ async def dashboard_socket(ws:WebSocket, token: str = Query(None)):
                 case 193:
                     await manager.fetch_clients_subs_coaches(ws)
                 case 194:
-                    await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
+                    await client_manager.get_client_data(ws=ws, username = data.get("username"))
                 case 195:
-                    await clinet_manager.update_client_data(data=data.get('client'))
+                    await client_manager.update_client_data(data=data.get('client'))
                 case 196:
-                    if not await clinet_manager.add_subscription_to_user(data=data.get('data')):
-                        clinet_manager.roll()
-                    await clinet_manager.get_client_data(ws=ws, username = data.get("username"))
-                    await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
-                    await clinet_manager.get_subs(ws, data.get("username"))
+                    if not await client_manager.add_subscription_to_user(data=data.get('data')):
+                        client_manager.roll()
+
+                    await client_manager.get_client_data(ws=ws, username = data.get("data").get("client_id"))
+                    await client_manager.fetch_client_lessons(ws=ws, username=data.get("data").get("client_id"))
+                    await client_manager.get_subs(ws, username = data.get("data").get("client_id"))
                 case 197:
-                    await clinet_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
+                    await client_manager.fetch_client_lessons(ws=ws, username=data.get("username"))
                     print('Successfully worked with code 197')
                 case 198:
-                    await clinet_manager.get_subs(ws, data.get("username"))
+                    await client_manager.get_subs(ws, data.get("username"))
+                case 199:
+                    username = await client_manager.delete_lesson(data.get("id"))
+                    
+                    if username:
+                        await client_manager.get_client_data(ws=ws, username =username)
                 case 300:
                     await group_manager.get_group_and_coach(ws=ws)
                 case 301: #its for 301, 302, 303

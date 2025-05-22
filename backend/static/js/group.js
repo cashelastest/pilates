@@ -71,7 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeWebSocket() {
     if (!window.ws || window.ws.readyState !== WebSocket.OPEN) {
         try {
-            window.ws = new WebSocket('ws://localhost:8000/socket/');
+              const token = localStorage.getItem("token"); 
+            window.ws = new WebSocket('ws://localhost:8000/socket/?token=' + token);
             
             window.ws.onopen = function() {
                 console.log('WebSocket соединение установлено');
@@ -139,7 +140,7 @@ function initializeEventHandlers() {
     document.getElementById('saveAddLessonBtn').addEventListener('click', addLessonToGroup);
     
     // Обработчики для модального окна добавления расписания
-    // document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
+    document.getElementById('addScheduleBtn').addEventListener('click', openScheduleModal);
     document.getElementById('closeScheduleModal').addEventListener('click', closeScheduleModal);
     document.getElementById('cancelScheduleBtn').addEventListener('click', closeScheduleModal);
     document.getElementById('saveScheduleBtn').addEventListener('click', addScheduleItem);

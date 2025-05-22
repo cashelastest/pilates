@@ -38,7 +38,7 @@ def create_new_user(user: UserCreate, role: str = "user")-> User:
     )
     return new_user
 
-@auth_router.get('/registration/')
+@auth_router.get('/')
 def registration(request:Request):
     return templates.TemplateResponse(
         request=request, name= 'auth.html'
