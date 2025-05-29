@@ -140,7 +140,10 @@ def setup_colorama_logger(name: str = __name__) -> logging.Logger:
 loggers = {
         "coaches": setup_colorama_logger("coaches"),
         "client":setup_colorama_logger("client"),
-        "group":setup_colorama_logger('group')
+        "group":setup_colorama_logger('group'),
+        'dashboard': setup_colorama_logger('dashboard'),
+        'utils':setup_colorama_logger("utils"),
+        "statistics":setup_colorama_logger("statistics")
     }
 # Usage example
 if __name__ == "__main__":

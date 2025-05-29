@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request
 from fastapi.websockets import WebSocket
 from sqlalchemy.orm import Session
 from auth.auth import get_password_hash
@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from datetime import datetime
 from models import Client, User
 from utils import custom_translit
-from connection import Connection, get_db, db_session
+from connection import Connection
 
 clients_router = APIRouter(prefix="/clients")
 templates = Jinja2Templates(directory='templates')
@@ -52,10 +52,10 @@ class ClientsManager:
                     "client_id": client.id,
                     "start_date": datetime.now().strftime("%Y-%m-%d"),
                     "end_date": sub.valid_until.strftime("%Y-%m-%d"),
-                    "lessons_total": sub.template.total_lessons,  # Предполагаю, что это поле в template
+                    "lessons_total": sub.template.total_lessons,  
                     "lessons_used": len([1 for lesson in sub.lessons if lesson.is_used]),
                     "is_active": sub.template.total_lessons > len([1 for lesson in sub.lessons if lesson.is_used]),
-                    "price": sub.template.price  # Предполагаю, что цена в template
+                    "price": sub.template.price 
                 })
             
             sended_data = {'code': 403, 'data': data}
@@ -121,17 +121,17 @@ class ClientsManager:
             
             if self.username_exist(username, session):
                 raise Exception('Username already exists')
-            
-            # Создаем пользователя
+
             user = User(
                 username=username,
                 email=client_data.get("email"),
+                user_type = 'client',
                 password=get_password_hash(password=client_data.get("password"))
             )
             session.add(user)
-            session.flush()  # Получаем ID пользователя
+            session.flush()
             
-            # Создаем профиль клиента
+ 
             client = Client(
                 user_id=user.id,
                 name=client_data.get('full_name'),
@@ -159,12 +159,11 @@ class ClientsManager:
             
             client = user.client_profile
             
-            # Удаляем клиента (каскадно удалится и User, если настроено)
+
             session.delete(client)
-            session.delete(user)  # Явно удаляем пользователя
+            session.delete(user)  
 
 
-# Создаем экземпляр менеджера
 clients_manager = ClientsManager()
 
 

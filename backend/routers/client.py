@@ -363,13 +363,11 @@ class ClientManager:
     async def delete_lesson(self, lesson_id):
         """Удаляет урок и возвращает деньги клиенту"""
         with Connection.session_scope() as session:
-            lesson = session.get(Lesson, int(lesson_id))
+            # lesson = session.get(Lesson, int(lesson_id))
             lesson_payed = session.query(GroupLessonPayed).filter(
                 GroupLessonPayed.lesson_id == int(lesson_id)
             ).first()
-            
-            print([lesson, lesson_payed])
-            
+
             if lesson_payed:
                 username = lesson_payed.client.user.username
                 client = lesson_payed.client
@@ -378,15 +376,17 @@ class ClientManager:
                 session.delete(lesson_payed.lesson)
                 print(username)
                 return username
-            
-            print("No lesson found")
+            lesson_payed = session.get(Lesson, int(lesson_id))
+            session.delete(lesson_payed)
+            session.commit()
+            logger.info(lesson_payed)
             return None
 
 
 # Создаем экземпляр менеджера
 client_manager = ClientManager()
 
-async def create_group_lessons_schedule(session, group_id: int, last_payed_lesson_date: datetime = None, lessons_count: int = 4):
+async def create_group_lessons_schedule(session, group_id: int, lessons_count: int, last_payed_lesson_date: datetime = None):
     """Создает шаблоны групповых уроков для группы"""
     logger.debug(f'creating group template lessons {lessons_count}')
     

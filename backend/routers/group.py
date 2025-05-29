@@ -288,7 +288,7 @@ class GroupManager:
             session.flush()
             logger.debug(f"Schedules of the group: {schedules}")
             # Создаем шаблоны групповых уроков
-            await create_group_lessons_schedule(session, group.id)
+            # await create_group_lessons_schedule(session, group.id)
 
     async def get_group_schedules(self, group_id: int, ws: WebSocket):
         """Получает расписание группы"""

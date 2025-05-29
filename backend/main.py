@@ -8,6 +8,7 @@ from routers.socket import socket
 from fastapi.staticfiles import StaticFiles
 from routers.group import group_router
 from auth.registration import auth_router,api_auth_router
+from routers.stats import stats_router
 from auth.middleware import AuthMiddleware
 app = FastAPI()
 routers = [
@@ -20,7 +21,8 @@ routers = [
     subscription_router,
     api_subscription_router,
     auth_router,
-    api_auth_router
+    api_auth_router,
+    stats_router
 ]
 for router in routers:
     app.include_router(router)

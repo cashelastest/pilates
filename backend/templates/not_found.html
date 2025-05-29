@@ -1,0 +1,85 @@
+
+<link rel="stylesheet" href="{{ url_for('static',path = '/css/style.css')}}">
+<style>
+    .forbidden-container {
+        max-width: 600px;
+        margin: 50px auto;
+        text-align: center;
+        padding: 40px 20px;
+        background-color: var(--warm-white);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .forbidden-title {
+        font-size: 28px;
+        color: var(--almost-black);
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .forbidden-message {
+        color: var(--dark-gray);
+        margin-bottom: 30px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    .forbidden-image {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 30px;
+        display: block;
+    }
+    
+    .login-button {
+        background-color: var(--terracotta);
+        color: var(--warm-white);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .login-button:hover {
+        background-color: var(--coral);
+    }
+
+    @media screen and (max-width: 480px) {
+        .forbidden-container {
+            margin: 30px auto;
+            padding: 30px 15px;
+        }
+        
+        .forbidden-title {
+            font-size: 24px;
+        }
+        
+        .forbidden-image {
+            width: 150px;
+            height: 150px;
+        }
+    }
+</style>
+
+<main>
+    <div class="forbidden-container">
+        <h1 class="forbidden-title">Сторінка не знайдена</h1>
+        <p class="forbidden-message">Вибачте, але такої сторінки не існує.</p>
+        
+        <!-- SVG image for forbidden access -->
+        <svg class="forbidden-image" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#FBEAE2" />
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#E6B5A2" stroke-width="8" />
+            <line x1="55" y1="55" x2="145" y2="145" stroke="#E09380" stroke-width="10" stroke-linecap="round" />
+            <line x1="55" y1="145" x2="145" y2="55" stroke="#E09380" stroke-width="10" stroke-linecap="round" />
+        </svg>
+        
+        <a href="/dashboard/" class="login-button">Головна</a>
+    </div>
+</main>

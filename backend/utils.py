@@ -2,22 +2,41 @@ from connection import  Connection
 from sqlalchemy.orm import Session
 from models import Lesson, Client, Group,Coach,Subscription, GroupLessonPayed
 from datetime import datetime,date, timedelta
+from logger import loggers
+logger = loggers['utils']
 
 
-
-def get_all_lessons():
+def get_all_lessons(user_type, id):
     session = Connection.get_session()
     
     # Получаем все уроки кроме шаблонов групповых без оплаты
-    lessons = session.query(Lesson).filter(
-        (Lesson.is_group_template == False) |  # Индивидуальные уроки
-        (Lesson.is_group_template == True) & 
-        (Lesson.id.in_(  # Групповые уроки которые оплачены
-            session.query(GroupLessonPayed.lesson_id)
-        ))
-    ).all()
-
+    match user_type:
+        case "admin":
+            lessons = session.query(Lesson).filter(
+                (Lesson.is_group_template == False) |  # Индивидуальные уроки
+                (Lesson.is_group_template == True) & 
+                (Lesson.id.in_(  # Групповые уроки которые оплачены
+                    session.query(GroupLessonPayed.lesson_id)
+                ))
+            ).all()
+        case "coach":
+            lessons = session.query(Lesson).filter(
+(                (Lesson.is_group_template == False) |  # Индивидуальные уроки
+                (Lesson.is_group_template == True) & 
+                (Lesson.id.in_(  # Групповые уроки которые оплачены
+                    session.query(GroupLessonPayed.lesson_id)
+                ))&(Lesson.coach_id == id))
+            ).all()
+        case "client":
+            lessons = session.query(Lesson).filter(
+                ((Lesson.is_group_template == False) |  # Индивидуальные уроки
+                (Lesson.is_group_template == True) & 
+                (Lesson.id.in_(  # Групповые уроки которые оплачены
+                    session.query(GroupLessonPayed.lesson_id)
+                ))&(Lesson.client_id == id))
+            ).all()
     events = []
+    logger.info(f"found lessons: {lessons} for {id} {user_type}")
     for lesson in lessons:
         if lesson.is_cancelled:
             status = 'cancelled'

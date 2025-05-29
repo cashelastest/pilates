@@ -5,9 +5,12 @@ from typing import List, Dict
 from routers.dashboard import manager
 from routers.client import client_manager
 from routers.clients import clients_manager
+from routers.stats import get_overview_stats, get_attendance_stats,get_revenue_stats, get_trainers_stats, get_popular_classes, get_new_clients_stats,extract
 from routers.group import GroupManager
 from models import Lesson, Client,User
 from connection import Connection
+from logger import loggers
+logger = loggers['dashboard']
 socket = APIRouter(prefix = '/socket')
 group_manager = GroupManager()
 
@@ -57,26 +60,46 @@ async def dashboard_socket(ws:WebSocket, token: str = Query(None)):
     username = payload.get("sub")
     with Connection.session_scope() as session:
         user = session.query(User).filter(User.username == username).first()
+        match user.user_type:
+            case "admin":
+                id = user.admin_profile.id
+            case "coach":
+                id = user.coach_profile.id
+            case "client":
+                id = user.client_profile.id
+        username = user.username
+        user_type = user.user_type
+        logger.info(f"username authorithed user: {user.username}")
         if not user:
             await ws.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         await socket_manager.connect(ws, user.id)
     try:
+        print(user_type)
+        if user_type == 'coach':
+            logger.info(f"Coach scenario for {username}")
+            while True:
+                data =await manager.recieve_message(ws)
+                match data.get("code"):
+                    case 187:
+                        logger.info(f"Code 187 for coach {username} started")
+                        await manager.send_lessons(ws, socket_manager, is_changed=False, user_type = "coach", id = id)
+                        logger.info(f"Code 187 for coach {username} ended")
+
         while True:
             data =await manager.recieve_message(ws)
             match data.get('code'):
+
                 case 187: 
-                    await manager.send_lessons(ws, socket_manager,is_changed=False)
+                    await manager.send_lessons(ws, socket_manager,user_type=user_type,is_changed=False)
                 case 188:
                     await manager.change_lessons_day_or_time(changed_data=data)
-                    await manager.send_lessons(ws)
+                    await manager.send_lessons(ws, socket_manager,user_type=user_type)
                 case 189:
                     await manager.send_active_clients(ws)
                 case 190:
-                    await manager.create_lesson(lesson_data=data['event'])
-                    await manager.send_lessons(ws)
-                case 191:
-                    await manager.create_subscription(subscription_data=data['subscription'])
+                    await manager.create_lesson(ws,lesson_data=data['event'])
+                    await manager.send_lessons(ws, socket_manager,user_type=user_type)
                 case 193:
                     await manager.fetch_clients_subs_coaches(ws)
                 case 194:
@@ -97,7 +120,6 @@ async def dashboard_socket(ws:WebSocket, token: str = Query(None)):
                     await client_manager.get_subs(ws, data.get("username"))
                 case 199:
                     username = await client_manager.delete_lesson(data.get("id"))
-                    
                     if username:
                         await client_manager.get_client_data(ws=ws, username =username)
                 case 300:
@@ -151,6 +173,19 @@ async def dashboard_socket(ws:WebSocket, token: str = Query(None)):
                 case 407:
                     await clients_manager.delete_client(data.get("username"))
                     await clients_manager.get_all_clients(ws=ws)
+
+                case 500:
+                    await get_overview_stats(ws, data.get("period"))
+                case 501:
+                    await get_attendance_stats(ws, data.get("period"))
+                case 502:
+                    await get_revenue_stats(ws, data.get("period"))
+                case 503:
+                    await get_trainers_stats(ws, data.get("period"))
+                case 504:
+                    await get_popular_classes(ws, data.get("period"))
+                case 505:
+                    await get_new_clients_stats(ws, data.get("period"))
                 case _:
                     print('don`t understand')
                     print(data)

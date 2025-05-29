@@ -171,35 +171,9 @@ class Lesson(Base):
     coach = relationship("Coach", back_populates='lessons')
 
 
-# @event.listens_for(Lesson, 'before_insert')
-# def check_balance(mapper, connection, lesson):
-#     session = Session(bind=connection)
-#     client = session.get(Client, lesson.client_id)
-#     # print(f"CLIENT ID {lesson.client_id}")
-#     if client and client.balance <lesson.price:
-#         session.rollback()
-#         raise Exception("Not enough money!")
-#     client.balance -= lesson.price
-#     # session.commit()
-
 @event.listens_for(Lesson, "before_delete")
 def payback_delete_lesson(mapper, connection, lesson):
     session = Session(bind= connection)
     client = session.get(Client, lesson.client_id)
     if client:
         client.balance+=lesson.price
-# @event.listens_for(Subscription, "before_insert")
-# def check_balance_for_sub(mapper,connection, subscription):
-#     session = Session(bind= connection)
-#     print(subscription.client_id)
-#     client = session.get(Client,subscription.client_id)
-#     template = session.get(SubscriptionTemplate,subscription.template_id)
-#     if not client:
-#         raise Exception(f"Client with id {subscription.client_id} does not exist in db")
-#     if not template:
-#         raise Exception(f'Subscription template with id {subscription.template_id} does not exist in db')
-#     if client.balance < template.price:
-#         session.rollback()
-#         raise Exception("Not enough money!")
-#     client.balance -= template.price
-#     session.commit()

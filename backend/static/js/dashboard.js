@@ -5,6 +5,89 @@ document.addEventListener('DOMContentLoaded', function() {
   window.ws = new WebSocket('ws://localhost:8000/socket/?token=' + token);
   let calendar;
   
+  function showErrorMessage(message) {
+    // Створюємо сповіщення про помилку
+    const notification = document.createElement('div');
+    notification.className = 'error-notification';
+    notification.innerHTML = `
+      <div class="notification-content">
+        <span class="notification-icon">⚠️</span>
+        <span class="notification-message">${message}</span>
+        <button class="notification-close">&times;</button>
+      </div>
+    `;
+    
+    // Додаємо стилі
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f44336;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideInRight 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматичне видалення через 5 секунд
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 5000);
+    
+    // Обробник кнопки закриття
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    });
+  }
+  
+  // Функція для показу успішних повідомлень
+  function showSuccessMessage(message) {
+    const notification = document.createElement('div');
+    notification.className = 'success-notification';
+    notification.innerHTML = `
+      <div class="notification-content">
+        <span class="notification-icon">✓</span>
+        <span class="notification-message">${message}</span>
+        <button class="notification-close">&times;</button>
+      </div>
+    `;
+    
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideInRight 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 3000);
+    
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    });
+  }
+  
   // Додаємо стилі для модального вікна, якщо вони потрібні
   const addStyles = () => {
     if (!document.getElementById('modal-styles')) {
@@ -66,6 +149,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Отримано дані для випадаючих списків абонемента:', data.data);
         updateSubscriptionDropdownLists(data.data);
         break;
+      case 400:
+        console.error('Помилка сервера:', data.message || data.details);
+        const errorMessage = data.details || data.message || 'Сталася помилка при обробці запиту';
+        showErrorMessage(errorMessage);
+        break;
       default:
         console.log('Не оброблений код:', data.code);
     }
@@ -87,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const groupSelect = document.getElementById('groupSelect');
   const clientSelect = document.getElementById('clientSelect');
   const priceInput = document.getElementById('lessonPrice');
-  const subscriptionSelect = document.getElementById('subscriptionSelect');
   
   // Функція для відображення вмісту подій
   function renderEventContent(arg) {
@@ -246,15 +333,6 @@ document.addEventListener('DOMContentLoaded', function() {
       option.textContent = client.name;
       clientSelect.appendChild(option);
     });
-    
-    // Абонементи
-    subscriptionSelect.innerHTML = '<option value="">Оберіть абонемент (необов\'язково)</option>';
-    data[3].forEach(subscription => {
-      const option = document.createElement('option');
-      option.value = subscription.id;
-      option.textContent = subscription.name;
-      subscriptionSelect.appendChild(option);
-    });
   }
   
   // Автозаповнення назви при виборі групи та управління залежностями
@@ -312,13 +390,13 @@ document.addEventListener('DOMContentLoaded', function() {
   saveBtn.addEventListener('click', function() {
     // Перевіряємо, чи вибрана група або клієнт
     if (!groupSelect.value && !clientSelect.value) {
-      alert('Будь ласка, виберіть групу або клієнта');
+      showErrorMessage('Будь ласка, виберіть групу або клієнта');
       return;
     }
     
     // Перевірка валідності форми
     if (!lessonForm.checkValidity()) {
-      alert('Будь ласка, заповніть усі обов\'язкові поля');
+      showErrorMessage('Будь ласка, заповніть усі обов\'язкові поля');
       return;
     }
     
@@ -332,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const groupId = groupSelect.value;
     let clientId = clientSelect.value;
     const price = parseInt(priceInput.value);
-    const subscriptionId = subscriptionSelect.value;
+    
     if (clientId === '') {
       clientId = null;
     }
@@ -353,8 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
         status: 'scheduled',
         coachId: coachId,
         groupId: groupId,
-        clientId: clientId,
-        subscriptionId: subscriptionId || null
+        clientId: clientId
       },
       className: 'future_lesson'
     };
@@ -374,13 +451,15 @@ document.addEventListener('DOMContentLoaded', function() {
         group_id: groupId || null,
         client_id: clientId || null,
         price: price,
-        subscription_id: subscriptionId || null,
         is_cancelled: false
       }
     }));
     
     // Закриття модального вікна
     closeModal();
+    
+    // Показуємо повідомлення про успішне створення
+    showSuccessMessage('Заняття успішно створено');
   });
   
   // Ініціалізація календаря

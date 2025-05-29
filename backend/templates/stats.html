@@ -1,66 +1,42 @@
-<!DOCTYPE html>
-<html lang="uk">
+{% extends 'base.html' %}
+{% set active_page = "stats" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Статистика - Pilates Studio CRM</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/stats.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap"
-        rel="stylesheet">
+{% block title %}Статистика{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/stats.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', path='/css/stats-additions.css') }}"> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+{% endblock %}
 
-<body>
-    <header class="header-block">
-        <span class="left-part">Pilates Studio</span>
-        <nav>
-            <ul>
-                <li><a href="index.html">Дошка</a></li>
-                <li><a href="coaches.html">Тренери</a></li>
-                <li><a href="clients.html">Клієнти</a></li>
-                <li class="active-page"><a href="stats.html">Статистика</a></li>
-            </ul>
-        </nav>
-        <div class="menu-btn" aria-label="Відкрити меню">
-            <div class="hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </div>
-        </div>
-        <div class="dropdown-menu">
-            <a href="index.html" class="dropdown-item">Дошка</a>
-            <a href="coaches.html" class="dropdown-item">Тренери</a>
-            <a href="clients.html" class="dropdown-item">Клієнти</a>
-            <a href="stats.html" class="dropdown-item">Статистика</a>
-            <a href="logout.html" class="dropdown-item">Вихід</a>
-        </div>
-    </header>
-
+{% block content %}
     <main>
         <div class="stats-container">
-            <!-- Фильтры и периоды -->
+            <!-- Заголовок и фильтры периодов -->
             <div class="stats-header">
                 <h1>Статистика та звітність</h1>
                 <div class="period-selector">
-                    <button class="period-btn active">Тиждень</button>
-                    <button class="period-btn">Місяць</button>
+                    <button class="period-btn">Тиждень</button>
+                    <button class="period-btn active">Місяць</button>
                     <button class="period-btn">Квартал</button>
                     <button class="period-btn">Рік</button>
                     <div class="date-range">
-                        <input type="date" class="date-input" id="start-date" value="2025-04-01">
+                        <input type="date" class="date-input" id="start-date">
                         <span>—</span>
-                        <input type="date" class="date-input" id="end-date" value="2025-04-30">
+                        <input type="date" class="date-input" id="end-date">
                         <button class="apply-btn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M20 6L9 17L4 12" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </button>
                     </div>
+                    <button class="refresh-btn" title="Оновити дані">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 4V10H7M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M3.51 15A9 9 0 0 0 18.36 18.36L23 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Оновити
+                    </button>
                 </div>
             </div>
 
@@ -73,14 +49,14 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-value">128</div>
+                        <div class="stat-value">...</div>
                         <div class="stat-label">Активних клієнтів</div>
                     </div>
-                    <div class="stat-change positive">
+                    <div class="stat-change">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        +8%
+                        ...
                     </div>
                 </div>
                 
@@ -91,50 +67,50 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-value">94</div>
-                        <div class="stat-label">Заняття за місяць</div>
+                        <div class="stat-value">...</div>
+                        <div class="stat-label">Заняття за період</div>
                     </div>
-                    <div class="stat-change positive">
+                    <div class="stat-change">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        +12%
+                        ...
                     </div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2V5M12 8V11M12 14V17M12 20V23M4.22183 5.99999L6.91683 7.34999M9.61183 8.69999L12.3068 10.05M15.0018 11.4L17.6968 12.75M20.3918 14.1L23.0868 15.45M1.99683 12H4.99683M7.99683 12H10.9968M13.9968 12H16.9968M19.9968 12H22.9968M4.22183 18L6.91683 16.65M9.61183 15.3L12.3068 13.95M15.0018 12.6L17.6968 11.25M20.3918 9.89999L23.0868 8.54999" stroke="#E6B5A2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12ZM21 12C21 12 18 19 12 19C6 19 3 12 3 12C3 12 6 5 12 5C18 5 21 12 21 12Z" stroke="#E6B5A2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-value">82%</div>
+                        <div class="stat-value">...</div>
                         <div class="stat-label">Середня заповненість</div>
                     </div>
-                    <div class="stat-change negative">
+                    <div class="stat-change">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        -3%
+                        ...
                     </div>
                 </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 14L4 9L9 4M15 4L20 9L15 14M12 4V20" stroke="#E6B5A2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 2V6M6.31 3L5 5M17.69 3L19 5M12 12V16M4 10H20M4 14H20M7 22H17C18.1046 22 19 21.1046 19 20V8C19 6.89543 18.1046 6 17 6H7C5.89543 6 5 6.89543 5 8V20C5 21.1046 5.89543 22 7 22Z" stroke="#E6B5A2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-value">45,600₴</div>
-                        <div class="stat-label">Дохід за місяць</div>
+                        <div class="stat-value">...</div>
+                        <div class="stat-label">Дохід за період</div>
                     </div>
-                    <div class="stat-change positive">
+                    <div class="stat-change">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        +15%
+                        ...
                     </div>
                 </div>
             </div>
@@ -143,7 +119,7 @@
             <div class="stats-charts">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h2>Відвідуваність за місяць</h2>
+                        <h2>Відвідуваність за період</h2>
                         <div class="chart-actions">
                             <button class="chart-action-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,92 +184,11 @@
                             <th>Заняття</th>
                             <th>Клієнти</th>
                             <th>Заповненість</th>
-                            <th>Рейтинг</th>
                             <th>Дохід</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="trainer-cell">
-                                <div class="trainer-avatar">АІ</div>
-                                <div>Александра Іванова</div>
-                            </td>
-                            <td>32</td>
-                            <td>58</td>
-                            <td>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 95%;"></div>
-                                    <span class="progress-value">95%</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="rating">
-                                    <span class="rating-value">4.9</span>
-                                    <div class="rating-stars">
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star half-filled">★</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>15,200₴</td>
-                        </tr>
-                        <tr>
-                            <td class="trainer-cell">
-                                <div class="trainer-avatar">ДП</div>
-                                <div>Дмитро Петров</div>
-                            </td>
-                            <td>28</td>
-                            <td>42</td>
-                            <td>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 82%;"></div>
-                                    <span class="progress-value">82%</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="rating">
-                                    <span class="rating-value">4.7</span>
-                                    <div class="rating-stars">
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star half-filled">★</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>13,600₴</td>
-                        </tr>
-                        <tr>
-                            <td class="trainer-cell">
-                                <div class="trainer-avatar">МС</div>
-                                <div>Марія Сидорова</div>
-                            </td>
-                            <td>34</td>
-                            <td>63</td>
-                            <td>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 88%;"></div>
-                                    <span class="progress-value">88%</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="rating">
-                                    <span class="rating-value">4.8</span>
-                                    <div class="rating-stars">
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star filled">★</span>
-                                        <span class="star half-filled">★</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>16,800₴</td>
-                        </tr>
+                        <!-- Данные будут загружены через JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -348,9 +243,8 @@
             </div>
         </div>
     </main>
+{% endblock %}
 
-    <script src="../js/menu.js"></script>
-    <script src="../js/stats.js"></script>
-</body>
-
-</html>
+{% block scripts %}
+    <script src="{{ url_for('static', path='/js/stats.js') }}"></script>
+{% endblock %}

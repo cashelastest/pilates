@@ -6,7 +6,10 @@ from fastapi import Request, HTTPException,status, Depends,Response
 from connection import get_db
 from sqlalchemy.orm import Session
 from models import User
-SECRET_KEY = ""
+from dotenv import load_dotenv
+import os
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY") 
 ALGORITHM= "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 48*60 #~ for 48 hours
 JWT_COOKIE_NAME = "access_token"

@@ -5,6 +5,9 @@ from contextlib import contextmanager
 import functools
 from fastapi import HTTPException
 import asyncio
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 def get_db():
     db = Connection.get_session()
@@ -13,7 +16,12 @@ def get_db():
     finally:
         db.close()
 class Connection:
-    url = "mysql+pymysql://root:Sobaka1@localhost:3306/pilates"
+    username = os.getenv('DATABASE_USERNAME')
+    password = os.getenv("DATABASE_PASSWORD")
+    host = os.getenv('HOST')
+    port= os.getenv("PORT")
+    database_name = os.getenv("DATABASE_NAME")
+    url = f"mysql+pymysql://{username}:{password}@{host}:{port}/{database_name}"
     engine = create_engine(
         url,
         pool_size=20,
